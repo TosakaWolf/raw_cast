@@ -42,9 +42,43 @@ adb forward tcp:53517 tcp:53517
 - 固定ポートで手動デバッグするだけなら、先に `adb forward tcp:53517 tcp:53517` を実行し、`--port-retry=1` で起動すると端末側ポートの自動変更を避けられます。
 - Benchmark では `transport + pixel format + compression` の各組み合わせごとに stream を 1 回だけ初期化し、warmup 後に連続フレーム読み取りを計測してください。各組み合わせの計測後は reader、forward、remote process を停止します。
 
-### HTTP と stdout ストリーム
+### stdout と HTTP debug stream
 
-HTTP debug preview：
+ADB stdout binary stream。stdout モードはネットワークポートを開きません。stdout は純粋な RC01 binary stream で、`PID/BIND/READY` テキストは出力しません。
+
+> **重要：stderr を stdout に混ぜないでください。** stdout は binary frame channel です。stderr はログとして破棄するか別に読み取ってください。
+
+```shell
+adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=120 \
+    --compress=none \
+    2>/dev/null'
+```
+
+LZ4 を有効化、または 1 フレームだけ取得：
+
+```shell
+adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=120 \
+    --compress=lz4 \
+    2>/dev/null'
+
+adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --mode=stdout \
+    --format=rgb565 \
+    --oneshot \
+    --compress=none \
+    2>/dev/null'
+```
+
+HTTP はブラウザ preview と debug stream 専用です。
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
@@ -55,24 +89,16 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 adb forward tcp:53516 tcp:53516
 adb forward tcp:53517 tcp:53517
 
-# HTTP stream も既定では rgb565 を推奨します。LZ4 は任意です。
+# HTTP debug stream でも rgb565 を推奨します。LZ4 は任意です。
 # http://127.0.0.1:53516/stream?format=rgb565&fps=120&compress=none
 # http://127.0.0.1:53516/stream?format=rgb565&fps=120&compress=lz4
-```
-
-ADB stdout binary stream。stdout モードはネットワークポートを開きません。stdout は純粋な RC01 binary stream で、`PID/BIND/READY` テキストは出力しません。stderr を stdout に混ぜないでください。
-
-```shell
-adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol.raw_cast.Main --mode=stdout --format=rgb565 --fps=120 --compress=none 2>/dev/null'
-adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol.raw_cast.Main --mode=stdout --format=rgb565 --fps=120 --compress=lz4 2>/dev/null'
-adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol.raw_cast.Main --mode=stdout --format=rgb565 --oneshot --compress=none 2>/dev/null'
 ```
 
 ## オプションパラメータ
 
 ### 起動オプション
 
-起動オプションは `app_process` に渡します。ネットワークモードでは通常ポートだけを設定し、pixel format、FPS、compression は Raw TCP request line または HTTP query で指定します。stdout モードでは起動オプションの capture 設定を直接使います。
+起動オプションは `app_process` に渡します。ネットワークモードでは通常ポートだけを設定し、pixel format、FPS、compression は Raw TCP request line で指定します。HTTP query は debug channel 用です。stdout モードでは起動オプションの capture 設定を直接使います。
 
 | オプション | よく使う | 既定値 | 値 | 説明 |
 | --- | --- | --- | --- | --- |
@@ -90,7 +116,7 @@ adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol
 
 ### Stream / screenshot request parameter
 
-Raw TCP は接続後に空白区切りの `key=value` を 1 行送ります。HTTP は query string を使います。どのモードでも既定は `format=rgb565` を推奨し、`compress=lz4` を選択できます。
+Raw TCP は接続後に空白区切りの `key=value` を 1 行送ります。HTTP debug channel は query string を使います。既定は `format=rgb565` を推奨し、`compress=lz4` を選択できます。
 
 | パラメータ | よく使う | 既定値 | 値 | 対象 | 説明 |
 | --- | --- | --- | --- | --- | --- |
@@ -117,9 +143,9 @@ Benchmark では `transport + pixel format + compression` の各組み合わせ�
 
 | Transport | Entry | 内容 |
 | --- | --- | --- |
-| HTTP/1.1 keep-alive | `--port=PORT` | `/screenshot`、`/preview`、`/stream` |
 | Raw TCP | `--tcp=PORT` | 8 byte banner の後に連続 RC01 frames |
 | ADB stdout | `--mode=stdout` | 8 byte banner の後に stdout へ連続 RC01 frames |
+| HTTP/1.1 keep-alive | `--port=PORT` | debug 用 `/screenshot`、`/preview`、`/stream` |
 
 | `format=` | Protocol id | bytes/pixel | 用途 |
 | --- | ---: | ---: | --- |
@@ -132,14 +158,14 @@ Benchmark では `transport + pixel format + compression` の各組み合わせ�
 
 ## ドキュメント
 
-| 文書 | 内容 |
+| 文書 | リンク |
 | --- | --- |
-| [CLI.md](CLI.md) | コマンドライン引数、stdout の状態行、起動例 |
-| [TRANSPORTS.md](TRANSPORTS.md) | HTTP/1.1 keep-alive、Raw TCP、ADB stdout |
-| [PROTOCOL.md](PROTOCOL.md) | RC01 フレーム形式、format id、LZ4 ルール |
-| [INTEGRATION.md](INTEGRATION.md) | Python、Go、Node.js、Java 連携 |
-| [PERFORMANCE.md](PERFORMANCE.md) | format、transport、compression の性能上の違い |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | 起動、接続、解析のよくある問題 |
+| コマンドライン引数、stdout の状態行、起動例 | [CLI.md](CLI.md) |
+| Raw TCP、stdout、HTTP debug channel | [TRANSPORTS.md](TRANSPORTS.md) |
+| RC01 フレーム形式、format id、LZ4 ルール | [PROTOCOL.md](PROTOCOL.md) |
+| Python、Go、Node.js、Java 連携 | [INTEGRATION.md](INTEGRATION.md) |
+| format、transport、compression の性能上の違い | [PERFORMANCE.md](PERFORMANCE.md) |
+| 起動、接続、解析のよくある問題 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
 
 ## 互換性
 

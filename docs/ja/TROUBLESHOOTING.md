@@ -22,7 +22,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 | `ClassNotFoundException` | APK パスと `CLASSPATH=` を確認 |
 | stdout に `PID` / `BIND` / `READY` がない | stderr と logcat で早期 crash を確認 |
 | `BIND:HTTP=FAILED` | ポートが使用中。ポートを変えるか `--port-retry` を増やす |
-| `no transports enabled` | HTTP と Raw TCP が無効で、`--mode=stdout` も使っていない |
+| `no transports enabled` | Raw TCP と HTTP debug port が無効で、`--mode=stdout` も使っていない |
 
 ## stdout に起動状態が出ない
 
@@ -48,7 +48,7 @@ READY=1
 1. 前面で起動し、stdout と stderr の両方を表示します。
 2. `adb shell logcat -d | grep raw_cast` で例外を確認します。
 3. APK が `CLASSPATH` の場所に push 済みか確認します。
-4. HTTP または Raw TCP が有効か、または `--mode=stdout` を使っているか確認します。
+4. Raw TCP または HTTP debug port が有効か、または `--mode=stdout` を使っているか確認します。
 5. detached 起動が必要で stdout を読めない場合は、固定ポートと `--port-retry=1` を使います。
 
 ## HTTP に接続できない

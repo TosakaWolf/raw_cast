@@ -10,19 +10,12 @@
 
 ## 基本起動
 
-HTTP/1.1 keep-alive のデフォルトポートは 53516 です。
+Raw TCP の主経路：
 
 ```shell
+adb forward tcp:53517 tcp:53517
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --port=53516
-```
-
-HTTP/1.1 と Raw TCP を同時に有効化する例：
-
-```shell
-adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
-    --port=53516 --tcp=53517
+    app_process / ink.mol.raw_cast.Main --tcp=53517
 ```
 
 stdout モード：
@@ -30,21 +23,32 @@ stdout モード：
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=30 \
+    2>/dev/null
 ```
 
-呼び出し側は `adb shell` 子プロセスの stdout pipe を直接読み取ります。上の `2>/dev/null` は stderr のログだけを捨て、binary frame stream には影響しません。stdout を null device にリダイレクトしないでください。
+> **重要：stderr を stdout に混ぜないでください。** stdout は binary frame channel です。`2>/dev/null` は stderr のログだけを捨て、frame stream には影響しません。
+
+HTTP/1.1 は debug preview と debug stream 専用です。
+
+```shell
+adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --port=53516 --tcp=53517
+```
 
 ## ポート引数
 
 | 引数 | 既定値 | 説明 |
 | --- | ---: | --- |
-| `--port=N` | `53516` | HTTP/1.1 keep-alive ポート。`0` で無効 |
 | `--tcp=N` | `0` | Raw TCP ポート。`0` で無効 |
 | `--mode=stdout` | - | ネットワークポートを開かず、stdout にフレームを書き出す |
+| `--port=N` | `53516` | HTTP/1.1 debug ポート。`0` で無効 |
 | `--port-retry=N` | `10` | ポート使用中に後続ポートを試す回数 |
 
-ネットワークモードでは HTTP または Raw TCP の少なくとも一方が必要です。stdout モードではネットワークポートは無視されます。
+ネットワークモードでは Raw TCP を優先してください。HTTP ポートは debug 用です。stdout モードではネットワークポートは無視されます。
 
 ## キャプチャ引数
 
@@ -89,4 +93,4 @@ BIND:HTTP=FAILED
 http://127.0.0.1:53516/preview
 ```
 
-単一 PNG/WEBP 画像を返します。スクリーンショットとストリーミングには HTTP `/screenshot`、HTTP `/stream`、Raw TCP、stdout を使えます。
+単一 PNG/WEBP 画像を返します。通常の capture と stream では Raw TCP または stdout を優先してください。HTTP `/screenshot` と `/stream` は debug entry です。

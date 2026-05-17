@@ -54,9 +54,43 @@ adb forward tcp:53517 tcp:53517
 - 如果只是人工调试固定端口，可先执行 `adb forward tcp:53517 tcp:53517`，再用 `--port-retry=1` 启动，避免设备端自动换端口。
 - Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始化一次流，先预热再统计连续取帧；每个组合测完后停止 reader、forward 和远端进程。
 
-### HTTP 与 stdout 通道
+### stdout 与 HTTP 调试通道
 
-HTTP 调试预览：
+ADB stdout 二进制流。stdout 模式不打开网络端口，stdout 是纯 RC01 二进制流，不输出 `PID/BIND/READY` 文本。
+
+> **重要：不要把 stderr 合并到 stdout。** stdout 是二进制帧通道，stderr 只能作为日志通道丢弃或单独读取。
+
+```shell
+adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=120 \
+    --compress=none \
+    2>/dev/null'
+```
+
+开启 LZ4 或抓取单帧：
+
+```shell
+adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=120 \
+    --compress=lz4 \
+    2>/dev/null'
+
+adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --mode=stdout \
+    --format=rgb565 \
+    --oneshot \
+    --compress=none \
+    2>/dev/null'
+```
+
+HTTP 仅作为浏览器预览和调试取流通道：
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
@@ -67,24 +101,16 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 adb forward tcp:53516 tcp:53516
 adb forward tcp:53517 tcp:53517
 
-# HTTP stream 仍默认建议 rgb565，LZ4 可选。
+# HTTP 调试 stream 仍建议使用 rgb565，LZ4 可选。
 # http://127.0.0.1:53516/stream?format=rgb565&fps=120&compress=none
 # http://127.0.0.1:53516/stream?format=rgb565&fps=120&compress=lz4
-```
-
-ADB stdout 二进制流。stdout 模式不打开网络端口，stdout 是纯 RC01 二进制流，不输出 `PID/BIND/READY` 文本；不要把 stderr 合并到 stdout。
-
-```shell
-adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol.raw_cast.Main --mode=stdout --format=rgb565 --fps=120 --compress=none 2>/dev/null'
-adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol.raw_cast.Main --mode=stdout --format=rgb565 --fps=120 --compress=lz4 2>/dev/null'
-adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol.raw_cast.Main --mode=stdout --format=rgb565 --oneshot --compress=none 2>/dev/null'
 ```
 
 ## 可选参数
 
 ### 启动参数
 
-启动参数用于 `app_process`。网络模式推荐只配置端口；像素格式、FPS、压缩等通常由 Raw TCP 请求行或 HTTP query 决定。stdout 模式直接使用启动参数里的截图选项。
+启动参数用于 `app_process`。网络模式推荐只配置端口；像素格式、FPS、压缩等通常由 Raw TCP 请求行决定。HTTP query 仅用于调试通道。stdout 模式直接使用启动参数里的截图选项。
 
 | 参数 | 常用 | 默认 | 可选值 | 说明 |
 | --- | --- | --- | --- | --- |
@@ -102,7 +128,7 @@ adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol
 
 ### 取流 / 截图请求参数
 
-Raw TCP 在连接后发送一行空格分隔的 `key=value`；HTTP 使用 query string。不同模式默认推荐 `format=rgb565`，可选 `compress=lz4`。
+Raw TCP 在连接后发送一行空格分隔的 `key=value`；HTTP 调试通道使用 query string。推荐默认使用 `format=rgb565`，可选 `compress=lz4`。
 
 | 参数 | 常用 | 默认 | 可选值 | 适用 | 说明 |
 | --- | --- | --- | --- | --- | --- |
@@ -131,18 +157,18 @@ Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始�
 | --- | --- |
 | 运行方式 | **无需安装 APK**，`adb push` 后通过 `app_process` 启动 |
 | 截图路径 | **SurfaceControl + HardwareBuffer** |
-| 正式传输 | **HTTP/1.1 keep-alive**、**Raw TCP**、**ADB stdout** |
+| 正式传输 | **Raw TCP**、**ADB stdout**；HTTP 仅用于调试 |
 | 默认像素 | 各模式推荐默认 `RGB_565`，需要完整 4 通道时使用 `RGBA_8888` |
 | 压缩 | `rgb565/rgba` 可选 LZ4；PNG/WEBP 不叠加 LZ4 |
-| 浏览器查看 | HTTP `/preview` 返回单帧预览图片 |
+| 浏览器查看 | HTTP `/preview` 返回调试用单帧预览图片 |
 
 ## 传输与格式
 
 | 传输 | 入口 | 内容 |
 | --- | --- | --- |
-| HTTP/1.1 keep-alive | `--port=PORT` | `/screenshot`、`/preview`、`/stream` |
 | Raw TCP | `--tcp=PORT` | 8 字节 banner 后连续输出 RC01 帧 |
 | ADB stdout | `--mode=stdout` | 8 字节 banner 后从标准输出连续输出 RC01 帧 |
+| HTTP/1.1 keep-alive | `--port=PORT` | 调试用 `/screenshot`、`/preview`、`/stream` |
 
 通用参数：
 
@@ -164,7 +190,7 @@ compress=none|lz4  quality=1..100  fps=1..120
 
 ## RC01 帧
 
-Raw TCP、HTTP `/stream` 和 ADB stdout 使用同一个 32 字节小端帧头：
+Raw TCP、ADB stdout 和 HTTP 调试 `/stream` 使用同一个 32 字节小端帧头：
 
 ```text
 offset  size  field
@@ -200,17 +226,14 @@ MuMu 模拟器（Android 12，1280x720）下的 `rgb565` 转 Mat 测试显示：
 
 ## 文档
 
-| 文档 | 内容 |
+| 文档 | 链接 |
 | --- | --- |
-| [docs/zh/README.md](docs/zh/README.md) | 中文文档入口与快速开始 |
-| [docs/en/README.md](docs/en/README.md) | English docs and quick start |
-| [docs/ja/README.md](docs/ja/README.md) | 日本語ドキュメントとクイックスタート |
-| [docs/zh/CLI.md](docs/zh/CLI.md) | 命令行参数、端口输出和启动示例 |
-| [docs/zh/TRANSPORTS.md](docs/zh/TRANSPORTS.md) | HTTP/1.1 keep-alive、Raw TCP、stdout |
-| [docs/zh/PROTOCOL.md](docs/zh/PROTOCOL.md) | RC01 帧头、格式 id、LZ4 规则 |
-| [docs/zh/INTEGRATION.md](docs/zh/INTEGRATION.md) | 宿主端集成建议 |
-| [docs/zh/PERFORMANCE.md](docs/zh/PERFORMANCE.md) | 格式、传输和性能建议 |
-| [docs/zh/TROUBLESHOOTING.md](docs/zh/TROUBLESHOOTING.md) | 常见问题排查 |
+| 命令行参数、端口输出和启动示例 | [docs/zh/CLI.md](docs/zh/CLI.md) |
+| Raw TCP、stdout、HTTP 调试通道 | [docs/zh/TRANSPORTS.md](docs/zh/TRANSPORTS.md) |
+| RC01 帧头、格式 id、LZ4 规则 | [docs/zh/PROTOCOL.md](docs/zh/PROTOCOL.md) |
+| 宿主端集成建议 | [docs/zh/INTEGRATION.md](docs/zh/INTEGRATION.md) |
+| 格式、传输和性能建议 | [docs/zh/PERFORMANCE.md](docs/zh/PERFORMANCE.md) |
+| 常见问题排查 | [docs/zh/TROUBLESHOOTING.md](docs/zh/TROUBLESHOOTING.md) |
 
 ## 致谢与参考
 

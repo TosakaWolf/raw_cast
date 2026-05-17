@@ -24,11 +24,11 @@ raw_cast latency mainly comes from capture, pixel conversion, encoding or compre
 
 | Transport | Protocol overhead | Strength | Recommendation |
 | --- | --- | --- | --- |
-| ADB stdout | Lowest | No port forwarding | Automation and local programs |
 | Raw TCP | Low | Simple, stable, easy to parse | OpenCV and inference pipelines |
-| HTTP/1.1 keep-alive | Medium | Standard clients, browser preview, easy integration | App integration, one-shot screenshots, long-lived streams |
+| ADB stdout | Lowest | No port forwarding | Automation and local programs |
+| HTTP/1.1 keep-alive | Medium | Standard clients, browser preview, easy integration | Browser preview and debug streaming |
 
-HTTP `/stream` uses a persistent connection and chunked response, so it does not reconnect per frame. Compared with Raw TCP it adds HTTP chunk boundaries and headers, but it is much easier to integrate with standard clients.
+HTTP `/stream` uses a persistent connection and chunked response, so it does not reconnect per frame. Compared with Raw TCP it adds HTTP chunk boundaries and headers. It is useful for debugging and standard-client troubleshooting, but it is not the default channel for high-frequency benchmarks.
 
 ## Benchmark Reference
 
@@ -49,8 +49,8 @@ Takeaway: `rgb565` + LZ4 greatly reduces transfer pressure in this emulator test
 | --- | --- |
 | Real-time CV or inference | Raw TCP, `format=rgb565`, convert color on the host side |
 | `rgb565/rgba` stream under ADB link pressure | Raw TCP, `format=rgb565&compress=lz4` |
-| Standard client streaming | HTTP, `/stream?format=rgb565&fps=30` |
-| Lossless screenshot | HTTP, `/screenshot?format=png` |
+| Standard-client debug streaming | HTTP, `/stream?format=rgb565&fps=30` |
+| Debug lossless screenshot | HTTP, `/screenshot?format=png` |
 | Browser preview | `/preview?format=webp&quality=80` |
 | Automation one-shot | stdout, `--format=rgb565 --oneshot` |
 
@@ -59,12 +59,12 @@ Takeaway: `rgb565` + LZ4 greatly reduces transfer pressure in this emulator test
 1. Check whether the requested capture size is necessary; lowering resolution usually helps most.
 2. For CV workloads, prefer `rgb565` to reduce device-side work and transfer size, then convert to the required matrix format on the host.
 3. If full-frame `rgb565/rgba` payloads are too heavy, try `rgb565&compress=lz4`.
-4. Prefer HTTP for standard clients; prefer Raw TCP or stdout for maximum single-stream throughput.
+4. Prefer Raw TCP for high-frequency streaming, then stdout. Use HTTP only for debugging and browser preview.
 5. Prefer WEBP for manual previews.
 
 ## Notes
 
 - `quality=100` may use lossless WEBP on supported platforms, increasing size and encode time.
 - PNG is lossless but expensive to encode, so it is not ideal for high-frame-rate preview.
-- stdout is a binary stream; callers must not mix logs into stdout.
+- stdout is a binary stream; callers must not mix stderr logs into stdout.
 - Android private APIs can change across OS versions, so performance and availability should be measured on target devices.

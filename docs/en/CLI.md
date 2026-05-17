@@ -10,19 +10,12 @@
 
 ## Basic Launch
 
-The default HTTP/1.1 keep-alive port is 53516:
+Raw TCP main path:
 
 ```shell
+adb forward tcp:53517 tcp:53517
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --port=53516
-```
-
-Start HTTP/1.1 and Raw TCP together:
-
-```shell
-adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
-    --port=53516 --tcp=53517
+    app_process / ink.mol.raw_cast.Main --tcp=53517
 ```
 
 stdout mode:
@@ -30,21 +23,32 @@ stdout mode:
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=30 \
+    2>/dev/null
 ```
 
-Callers should read the `adb shell` child process stdout pipe directly. The `2>/dev/null` above drops stderr logs only; it does not affect the binary frame stream. Do not redirect stdout to a null device.
+> **Important: never merge stderr into stdout.** stdout is the binary frame channel; `2>/dev/null` drops stderr logs only and does not affect the frame stream.
+
+HTTP/1.1 is only for debug preview and debug streaming:
+
+```shell
+adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --port=53516 --tcp=53517
+```
 
 ## Port Options
 
 | Option | Default | Description |
 | --- | ---: | --- |
-| `--port=N` | `53516` | HTTP/1.1 keep-alive port; `0` disables it |
 | `--tcp=N` | `0` | Raw TCP port; `0` disables it |
 | `--mode=stdout` | - | Do not open network sockets; write frames to stdout |
+| `--port=N` | `53516` | HTTP/1.1 debug port; `0` disables it |
 | `--port-retry=N` | `10` | Number of successive ports to try when the requested port is busy |
 
-Network mode must enable HTTP or Raw TCP. stdout mode ignores network ports.
+Network mode should prefer Raw TCP. The HTTP port is for debugging. stdout mode ignores network ports.
 
 ## Capture Options
 
@@ -89,4 +93,4 @@ Open this URL in a browser:
 http://127.0.0.1:53516/preview
 ```
 
-It returns a single PNG/WEBP image. Screenshots and streams are available through HTTP `/screenshot`, HTTP `/stream`, Raw TCP, or stdout.
+It returns a single PNG/WEBP image. Production capture and streaming should prefer Raw TCP or stdout; HTTP `/screenshot` and `/stream` are debug entries.

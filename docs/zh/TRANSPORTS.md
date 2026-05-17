@@ -6,25 +6,7 @@
   <a href="../ja/TRANSPORTS.md">日本語</a>
 </p>
 
-raw_cast 的正式传输方式为 HTTP/1.1 keep-alive、Raw TCP 和 ADB stdout。
-
-## HTTP/1.1 Keep-Alive
-
-HTTP 是默认主入口，端口默认 53516：
-
-```shell
-adb forward tcp:53516 tcp:53516
-adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --port=53516
-```
-
-端点：
-
-| 路径 | 内容 |
-| --- | --- |
-| `/screenshot` | 单帧 `rgb565/rgba`、PNG 或 WEBP；尺寸、格式等信息在 `X-Frame-*` 响应头 |
-| `/preview` | 单帧图片，默认 PNG，适合浏览器人工查看 |
-| `/stream` | `application/x-raw-cast-frames` chunked 流；每个 chunk 是一帧 RC01 数据 |
+raw_cast 的主要传输方式为 Raw TCP 和 ADB stdout。HTTP/1.1 keep-alive 仅用于浏览器预览、人工排查和调试取流。
 
 ## Raw TCP
 
@@ -51,14 +33,37 @@ stdout 模式不需要端口转发，适合自动化和本机程序。
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=30 \
+    2>/dev/null
 ```
 
-宿主端应直接读取 `adb shell` 子进程 stdout pipe。输出格式为 8 字节 banner + 连续 RC01 帧；stderr 只用于日志。
+> **重要：不要把 stderr 合并到 stdout。** stdout 是 8 字节 banner + 连续 RC01 帧的二进制通道；stderr 只能作为日志通道丢弃或单独读取。
+
+## HTTP/1.1 Keep-Alive
+
+HTTP 仅用于调试，端口默认 53516：
+
+```shell
+adb forward tcp:53516 tcp:53516
+adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main --port=53516
+```
+
+端点：
+
+| 路径 | 内容 |
+| --- | --- |
+| `/screenshot` | 单帧 `rgb565/rgba`、PNG 或 WEBP；尺寸、格式等信息在 `X-Frame-*` 响应头 |
+| `/preview` | 单帧图片，默认 PNG，适合浏览器人工查看 |
+| `/stream` | `application/x-raw-cast-frames` chunked 调试流；每个 chunk 是一帧 RC01 数据 |
+
+HTTP 通道便于浏览器和标准客户端排查，不作为高频 benchmark 的默认通道。
 
 ## 参数
 
-所有正式传输共享这些参数：
+Raw TCP、ADB stdout 和 HTTP 调试通道共享这些参数：
 
 | 参数 | 值 | 说明 |
 | --- | --- | --- |
@@ -72,7 +77,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 
 | 场景 | 推荐 |
 | --- | --- |
-| 浏览器人工查看 | HTTP `/preview` |
-| 标准 HTTP 客户端集成 | HTTP `/screenshot` 或 `/stream` |
 | OpenCV 实时处理 | Raw TCP `format=rgb565` |
 | 自动化管线 | ADB stdout |
+| 浏览器人工查看 | HTTP `/preview` |
+| 标准 HTTP 客户端调试 | HTTP `/screenshot` 或 `/stream` |

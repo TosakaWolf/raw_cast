@@ -22,7 +22,7 @@ Common causes:
 | `ClassNotFoundException` | Confirm the APK path and `CLASSPATH=` value |
 | stdout has no `PID` / `BIND` / `READY` | Check stderr and logcat for an early crash |
 | `BIND:HTTP=FAILED` | Port is occupied; change the port or increase `--port-retry` |
-| `no transports enabled` | HTTP and Raw TCP are both disabled and `--mode=stdout` was not used |
+| `no transports enabled` | Raw TCP and the HTTP debug port are both disabled and `--mode=stdout` was not used |
 
 ## No Startup Status on stdout
 
@@ -48,7 +48,7 @@ If nothing is printed:
 1. Start in the foreground and keep both stdout and stderr visible.
 2. Run `adb shell logcat -d | grep raw_cast` to inspect exceptions.
 3. Confirm the APK was pushed to the path used by `CLASSPATH`.
-4. Confirm HTTP or Raw TCP is enabled, or use `--mode=stdout`.
+4. Confirm Raw TCP or the HTTP debug port is enabled, or use `--mode=stdout`.
 5. If detached launch is required and stdout cannot be read, use fixed ports with `--port-retry=1`.
 
 ## Cannot Connect to HTTP

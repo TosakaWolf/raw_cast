@@ -6,9 +6,9 @@
   <a href="./PROTOCOL.md">日本語</a>
 </p>
 
-この文書は raw_cast の RC01 binary frame を定義します。Raw TCP、HTTP `/stream`、ADB stdout は同じ frame header を使うため、クライアントは同じ decoder を再利用できます。
+この文書は raw_cast の RC01 binary frame を定義します。Raw TCP、ADB stdout、HTTP debug `/stream` は同じ frame header を使うため、クライアントは同じ decoder を再利用できます。
 
-HTTP `/screenshot` と `/preview` は payload を直接返し、メタ情報はレスポンスヘッダーに入ります。HTTP `/stream` には banner はなく、レスポンス body は chunked stream で、各 chunk が完全な RC01 frame です。
+HTTP debug `/screenshot` と `/preview` は payload を直接返し、メタ情報はレスポンスヘッダーに入ります。HTTP debug `/stream` には banner はなく、レスポンス body は chunked stream で、各 chunk が完全な RC01 frame です。
 
 ## Banner
 
@@ -20,7 +20,7 @@ offset  size  field
 4       4     protocol_version = 1, little-endian uint32
 ```
 
-HTTP `/stream` には banner がありません。
+HTTP debug `/stream` には banner がありません。
 
 ## RC01 Frame Header
 

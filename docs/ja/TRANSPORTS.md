@@ -6,25 +6,7 @@
   <a href="./TRANSPORTS.md">日本語</a>
 </p>
 
-raw_cast の正式な転送方式は HTTP/1.1 keep-alive、Raw TCP、ADB stdout です。
-
-## HTTP/1.1 Keep-Alive
-
-HTTP がデフォルトの入口です。デフォルトポートは 53516 です。
-
-```shell
-adb forward tcp:53516 tcp:53516
-adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --port=53516
-```
-
-エンドポイント：
-
-| パス | 内容 |
-| --- | --- |
-| `/screenshot` | raw、PNG、WEBP の単一フレーム。メタ情報は `X-Frame-*` ヘッダー |
-| `/preview` | 単一画像フレーム。デフォルトは PNG。ブラウザ確認向け |
-| `/stream` | `application/x-raw-cast-frames` の chunked stream。各 chunk が 1 つの RC01 frame |
+raw_cast の主な転送方式は Raw TCP と ADB stdout です。HTTP/1.1 keep-alive はブラウザ preview、調査、debug stream 用です。
 
 ## Raw TCP
 
@@ -51,14 +33,37 @@ stdout モードはポート転送が不要で、自動化やローカルプロ�
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=30 \
+    2>/dev/null
 ```
 
-ホスト側は `adb shell` 子プロセスの stdout pipe を直接読み取ります。出力は 8 バイト banner + 連続 RC01 frames で、stderr はログ専用です。
+> **重要：stderr を stdout に混ぜないでください。** stdout は 8 byte banner + 連続 RC01 frames の binary channel です。stderr はログとして破棄するか別に読み取ってください。
+
+## HTTP/1.1 Keep-Alive
+
+HTTP は debug 専用です。デフォルトポートは 53516 です。
+
+```shell
+adb forward tcp:53516 tcp:53516
+adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main --port=53516
+```
+
+エンドポイント：
+
+| パス | 内容 |
+| --- | --- |
+| `/screenshot` | `rgb565/rgba`、PNG、WEBP の単一フレーム。メタ情報は `X-Frame-*` ヘッダー |
+| `/preview` | 単一画像フレーム。デフォルトは PNG。ブラウザ確認向け |
+| `/stream` | `application/x-raw-cast-frames` の chunked debug stream。各 chunk が 1 つの RC01 frame |
+
+HTTP channel はブラウザや標準 client の調査に便利ですが、高頻度 benchmark のデフォルト channel ではありません。
 
 ## パラメータ
 
-すべての正式 transport は次のパラメータを共有します。
+Raw TCP、ADB stdout、HTTP debug channel は次のパラメータを共有します。
 
 | パラメータ | 値 | 説明 |
 | --- | --- | --- |
@@ -72,7 +77,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 
 | 場面 | 推奨 |
 | --- | --- |
-| ブラウザで確認 | HTTP `/preview` |
-| 標準 HTTP クライアント連携 | HTTP `/screenshot` または `/stream` |
 | OpenCV リアルタイム処理 | Raw TCP `format=rgb565` |
 | 自動化パイプライン | ADB stdout |
+| ブラウザで確認 | HTTP `/preview` |
+| 標準 HTTP クライアントでの debug | HTTP `/screenshot` または `/stream` |

@@ -29,25 +29,6 @@ READY=1
 
 `--mode=stdout` は別モードです。stdout は binary RC01 stream なので、テキスト状態として解析してはいけません。
 
-## HTTP
-
-標準 HTTP クライアントで `/screenshot`、`/preview`、`/stream` を利用できます。
-
-単一フレーム endpoint：
-
-```text
-GET http://127.0.0.1:53516/screenshot?format=png
-GET http://127.0.0.1:53516/preview?format=webp&quality=80
-```
-
-stream endpoint：
-
-```text
-GET http://127.0.0.1:53516/stream?format=rgb565&fps=30
-```
-
-`/stream` では HTTP クライアントが通常 chunked transfer encoding を処理します。アプリケーション側は RC01 の `payload_size` を使って frame を切り出します。
-
 ## Raw TCP
 
 Raw TCP ポートに接続した後、ASCII の 1 行を送ります。
@@ -65,8 +46,32 @@ stdout モードは呼び出し側が binary stream を直接消費する場合�
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=30 \
+    2>/dev/null
 ```
 
 このモードは `PID` / `BIND` / `READY` テキストを出力しません。
-ホスト側は子プロセスの stdout pipe から banner と RC01 frames を読み取ります。`2>/dev/null` は stderr logs だけを捨てます。
+ホスト側は子プロセスの stdout pipe から banner と RC01 frames を読み取ります。
+
+> **重要：stderr を stdout に混ぜないでください。** `2>/dev/null` は stderr logs だけを捨てます。ログが必要な場合は stderr を別に読み取ってください。
+
+## HTTP Debug
+
+HTTP はブラウザ preview と標準 client の debug 専用です。`/screenshot`、`/preview`、`/stream` を利用できます。
+
+単一フレーム endpoint：
+
+```text
+GET http://127.0.0.1:53516/screenshot?format=png
+GET http://127.0.0.1:53516/preview?format=webp&quality=80
+```
+
+stream endpoint：
+
+```text
+GET http://127.0.0.1:53516/stream?format=rgb565&fps=30
+```
+
+`/stream` では HTTP クライアントが通常 chunked transfer encoding を処理します。アプリケーション側は RC01 の `payload_size` を使って frame を切り出します。

@@ -29,25 +29,6 @@ READY=1
 
 `--mode=stdout` is different: stdout is the binary RC01 stream and must not be parsed as text status.
 
-## HTTP
-
-Standard HTTP clients can use `/screenshot`, `/preview`, and `/stream`.
-
-One-shot endpoints:
-
-```text
-GET http://127.0.0.1:53516/screenshot?format=png
-GET http://127.0.0.1:53516/preview?format=webp&quality=80
-```
-
-Streaming endpoint:
-
-```text
-GET http://127.0.0.1:53516/stream?format=rgb565&fps=30
-```
-
-For `/stream`, the HTTP client usually handles chunked transfer encoding. Application code then reads RC01 frames using the `payload_size` field.
-
 ## Raw TCP
 
 After connecting to the Raw TCP port, send one ASCII request line:
@@ -65,8 +46,32 @@ stdout mode is useful when the caller directly consumes the binary stream:
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=30 \
+    2>/dev/null
 ```
 
 This mode does not print `PID` / `BIND` / `READY` text.
-The host should read the banner and RC01 frames from the child process stdout pipe; `2>/dev/null` only drops stderr logs.
+The host should read the banner and RC01 frames from the child process stdout pipe.
+
+> **Important: never merge stderr into stdout.** `2>/dev/null` only drops stderr logs. If logs are needed, read stderr separately.
+
+## HTTP Debug
+
+HTTP is only for browser preview and standard-client debugging. Clients can use `/screenshot`, `/preview`, and `/stream`.
+
+One-shot endpoints:
+
+```text
+GET http://127.0.0.1:53516/screenshot?format=png
+GET http://127.0.0.1:53516/preview?format=webp&quality=80
+```
+
+Streaming endpoint:
+
+```text
+GET http://127.0.0.1:53516/stream?format=rgb565&fps=30
+```
+
+For `/stream`, the HTTP client usually handles chunked transfer encoding. Application code then reads RC01 frames using the `payload_size` field.

@@ -42,9 +42,43 @@ adb forward tcp:53517 tcp:53517
 - 如果只是人工调试固定端口，可先执行 `adb forward tcp:53517 tcp:53517`，再用 `--port-retry=1` 启动，避免设备端自动换端口。
 - Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始化一次流，先预热再统计连续取帧；每个组合测完后停止 reader、forward 和远端进程。
 
-### HTTP 与 stdout 通道
+### stdout 与 HTTP 调试通道
 
-HTTP 调试预览：
+ADB stdout 二进制流。stdout 模式不打开网络端口，stdout 是纯 RC01 二进制流，不输出 `PID/BIND/READY` 文本。
+
+> **重要：不要把 stderr 合并到 stdout。** stdout 是二进制帧通道，stderr 只能作为日志通道丢弃或单独读取。
+
+```shell
+adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=120 \
+    --compress=none \
+    2>/dev/null'
+```
+
+开启 LZ4 或抓取单帧：
+
+```shell
+adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=120 \
+    --compress=lz4 \
+    2>/dev/null'
+
+adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --mode=stdout \
+    --format=rgb565 \
+    --oneshot \
+    --compress=none \
+    2>/dev/null'
+```
+
+HTTP 仅作为浏览器预览和调试取流通道：
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
@@ -55,24 +89,16 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 adb forward tcp:53516 tcp:53516
 adb forward tcp:53517 tcp:53517
 
-# HTTP stream 仍默认建议 rgb565，LZ4 可选。
+# HTTP 调试 stream 仍建议使用 rgb565，LZ4 可选。
 # http://127.0.0.1:53516/stream?format=rgb565&fps=120&compress=none
 # http://127.0.0.1:53516/stream?format=rgb565&fps=120&compress=lz4
-```
-
-ADB stdout 二进制流。stdout 模式不打开网络端口，stdout 是纯 RC01 二进制流，不输出 `PID/BIND/READY` 文本；不要把 stderr 合并到 stdout。
-
-```shell
-adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol.raw_cast.Main --mode=stdout --format=rgb565 --fps=120 --compress=none 2>/dev/null'
-adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol.raw_cast.Main --mode=stdout --format=rgb565 --fps=120 --compress=lz4 2>/dev/null'
-adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol.raw_cast.Main --mode=stdout --format=rgb565 --oneshot --compress=none 2>/dev/null'
 ```
 
 ## 可选参数
 
 ### 启动参数
 
-启动参数用于 `app_process`。网络模式推荐只配置端口；像素格式、FPS、压缩等通常由 Raw TCP 请求行或 HTTP query 决定。stdout 模式直接使用启动参数里的截图选项。
+启动参数用于 `app_process`。网络模式推荐只配置端口；像素格式、FPS、压缩等通常由 Raw TCP 请求行决定。HTTP query 仅用于调试通道。stdout 模式直接使用启动参数里的截图选项。
 
 | 参数 | 常用 | 默认 | 可选值 | 说明 |
 | --- | --- | --- | --- | --- |
@@ -90,7 +116,7 @@ adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol
 
 ### 取流 / 截图请求参数
 
-Raw TCP 在连接后发送一行空格分隔的 `key=value`；HTTP 使用 query string。不同模式默认推荐 `format=rgb565`，可选 `compress=lz4`。
+Raw TCP 在连接后发送一行空格分隔的 `key=value`；HTTP 调试通道使用 query string。推荐默认使用 `format=rgb565`，可选 `compress=lz4`。
 
 | 参数 | 常用 | 默认 | 可选值 | 适用 | 说明 |
 | --- | --- | --- | --- | --- | --- |
@@ -117,9 +143,9 @@ Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始�
 
 | 传输 | 入口 | 内容 |
 | --- | --- | --- |
-| HTTP/1.1 keep-alive | `--port=PORT` | `/screenshot`、`/preview`、`/stream` |
 | Raw TCP | `--tcp=PORT` | 8 字节 banner 后连续输出 RC01 帧 |
 | ADB stdout | `--mode=stdout` | 8 字节 banner 后从标准输出连续输出 RC01 帧 |
+| HTTP/1.1 keep-alive | `--port=PORT` | 调试用 `/screenshot`、`/preview`、`/stream` |
 
 | `format=` | 协议 id | 字节/像素 | 用途 |
 | --- | ---: | ---: | --- |
@@ -132,14 +158,14 @@ Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始�
 
 ## 文档入口
 
-| 文档 | 内容 |
+| 文档 | 链接 |
 | --- | --- |
-| [CLI.md](CLI.md) | 命令行参数、stdout 状态行、启动方式 |
-| [TRANSPORTS.md](TRANSPORTS.md) | HTTP/1.1 keep-alive、Raw TCP、ADB stdout |
-| [PROTOCOL.md](PROTOCOL.md) | RC01 帧格式、格式 id、LZ4 规则 |
-| [INTEGRATION.md](INTEGRATION.md) | Python、Go、Node.js、Java 集成建议 |
-| [PERFORMANCE.md](PERFORMANCE.md) | 格式、传输、压缩的性能取舍 |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | 常见启动、连接、解析问题 |
+| 命令行参数、stdout 状态行、启动方式 | [CLI.md](CLI.md) |
+| Raw TCP、stdout、HTTP 调试通道 | [TRANSPORTS.md](TRANSPORTS.md) |
+| RC01 帧格式、格式 id、LZ4 规则 | [PROTOCOL.md](PROTOCOL.md) |
+| Python、Go、Node.js、Java 集成建议 | [INTEGRATION.md](INTEGRATION.md) |
+| 格式、传输、压缩的性能取舍 | [PERFORMANCE.md](PERFORMANCE.md) |
+| 常见启动、连接、解析问题 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
 
 ## 兼容性
 

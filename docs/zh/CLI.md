@@ -10,19 +10,12 @@
 
 ## 基本启动
 
-HTTP/1.1 keep-alive 端口默认是 53516：
+Raw TCP 主路径：
 
 ```shell
+adb forward tcp:53517 tcp:53517
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --port=53516
-```
-
-同时开启 HTTP/1.1 和 Raw TCP：
-
-```shell
-adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
-    --port=53516 --tcp=53517
+    app_process / ink.mol.raw_cast.Main --tcp=53517
 ```
 
 stdout 模式：
@@ -30,21 +23,32 @@ stdout 模式：
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=30 \
+    2>/dev/null
 ```
 
-调用方应直接读取 `adb shell` 子进程的 stdout pipe。上面的 `2>/dev/null` 只丢弃 stderr 日志，不会影响二进制帧流；不要把 stdout 重定向到空设备。
+> **重要：不要把 stderr 合并到 stdout。** stdout 是二进制帧通道；`2>/dev/null` 只丢弃 stderr 日志，不会影响帧流。
+
+HTTP/1.1 仅用于调试预览和调试取流：
+
+```shell
+adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --port=53516 --tcp=53517
+```
 
 ## 端口参数
 
 | 参数 | 默认值 | 说明 |
 | --- | ---: | --- |
-| `--port=N` | `53516` | HTTP/1.1 keep-alive 端口；`0` 表示关闭 |
 | `--tcp=N` | `0` | Raw TCP 端口；`0` 表示关闭 |
 | `--mode=stdout` | - | 不打开网络端口，直接向标准输出写帧 |
+| `--port=N` | `53516` | HTTP/1.1 调试端口；`0` 表示关闭 |
 | `--port-retry=N` | `10` | 端口被占用时向后重试的次数 |
 
-网络模式至少需要开启 HTTP 或 Raw TCP。stdout 模式会忽略网络端口。
+网络模式建议优先开启 Raw TCP；HTTP 端口仅用于调试。stdout 模式会忽略网络端口。
 
 ## 捕获参数
 
@@ -89,4 +93,4 @@ BIND:HTTP=FAILED
 http://127.0.0.1:53516/preview
 ```
 
-该入口返回单帧 PNG/WEBP 图片。截图和取流可以使用 HTTP `/screenshot`、HTTP `/stream`、Raw TCP 或 stdout。
+该入口返回单帧 PNG/WEBP 图片。正式截图和取流建议优先使用 Raw TCP 或 stdout；HTTP `/screenshot` 和 `/stream` 仅作为调试入口。

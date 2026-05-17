@@ -22,7 +22,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 | `ClassNotFoundException` | 确认 APK 路径正确，并且 `CLASSPATH=` 指向该 APK |
 | stdout 没有 `PID` / `BIND` / `READY` | 查看 stderr 和 logcat，确认进程是否提前崩溃 |
 | `BIND:HTTP=FAILED` | 端口被占用，换端口或提高 `--port-retry` |
-| `no transports enabled` | HTTP 和 Raw TCP 都关闭，且没有使用 `--mode=stdout` |
+| `no transports enabled` | Raw TCP 和 HTTP 调试端口都关闭，且没有使用 `--mode=stdout` |
 
 ## stdout 没有启动状态
 
@@ -48,7 +48,7 @@ READY=1
 1. 前台启动，同时保留 stdout 和 stderr。
 2. 执行 `adb shell logcat -d | grep raw_cast` 查看异常。
 3. 确认 APK 已 push 到 `CLASSPATH` 指定路径。
-4. 确认至少开启 HTTP 或 Raw TCP，或使用 `--mode=stdout`。
+4. 确认已开启 Raw TCP、HTTP 调试端口，或使用 `--mode=stdout`。
 5. 如果必须 detached 且无法读取 stdout，只能使用固定端口并设置 `--port-retry=1`。
 
 ## 连接不上 HTTP

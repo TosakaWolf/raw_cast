@@ -24,11 +24,11 @@ raw_cast の遅延は主に capture、pixel conversion、encoding/compression、
 
 | Transport | Protocol overhead | 強み | 推奨 |
 | --- | --- | --- | --- |
-| ADB stdout | 最低 | ポート転送なし | 自動化、ローカルプログラム |
 | Raw TCP | 低 | 単純、安定、解析しやすい | OpenCV、推論 pipeline |
-| HTTP/1.1 keep-alive | 中 | 標準 client、ブラウザ preview、連携しやすい | アプリ連携、単一フレーム、長時間 stream |
+| ADB stdout | 最低 | ポート転送なし | 自動化、ローカルプログラム |
+| HTTP/1.1 keep-alive | 中 | 標準 client、ブラウザ preview、連携しやすい | ブラウザ preview と debug stream |
 
-HTTP `/stream` は persistent connection と chunked response を使うため、フレームごとに再接続しません。Raw TCP より HTTP chunk 境界と header の分だけ余分ですが、標準 client との連携が簡単です。
+HTTP `/stream` は persistent connection と chunked response を使うため、フレームごとに再接続しません。Raw TCP より HTTP chunk 境界と header の分だけ余分です。debug や標準 client での調査に便利ですが、高頻度 benchmark のデフォルト channel ではありません。
 
 ## ベンチマーク参考
 
@@ -49,8 +49,8 @@ HTTP `/stream` は persistent connection と chunked response を使うため、
 | --- | --- |
 | CV / 推論のリアルタイム処理 | Raw TCP、`format=rgb565`、ホスト側で色変換 |
 | ADB link に負荷がある `rgb565/rgba` stream | Raw TCP、`format=rgb565&compress=lz4` |
-| 標準 client の stream | HTTP、`/stream?format=rgb565&fps=30` |
-| 無劣化スクリーンショット | HTTP、`/screenshot?format=png` |
+| 標準 client での debug stream | HTTP、`/stream?format=rgb565&fps=30` |
+| debug 用の無劣化スクリーンショット | HTTP、`/screenshot?format=png` |
 | ブラウザ preview | `/preview?format=webp&quality=80` |
 | 自動化 one-shot | stdout、`--format=rgb565 --oneshot` |
 
@@ -59,12 +59,12 @@ HTTP `/stream` は persistent connection と chunked response を使うため、
 1. 必要な capture size か確認します。解像度を下げるのが最も効くことが多いです。
 2. CV では `rgb565` を優先して端末側の処理と転送量を抑え、必要な matrix format へはホスト側で変換します。
 3. 全フレームの `rgb565/rgba` payload が重い場合は `rgb565&compress=lz4` を試します。
-4. 標準 client では HTTP、単一 stream の最大 throughput では Raw TCP または stdout を優先します。
+4. 高頻度 stream では Raw TCP、次に stdout を優先します。HTTP は debug とブラウザ preview 用です。
 5. 手動 preview では WEBP を優先します。
 
 ## Notes
 
 - `quality=100` は対応 platform で lossless WEBP になり、サイズと encode 時間が増える場合があります。
 - PNG は無劣化ですが encode cost が高く、高フレームレート preview には向きません。
-- stdout は binary stream です。呼び出し側は stdout にログを混ぜないでください。
+- stdout は binary stream です。呼び出し側は stderr logs を stdout に混ぜないでください。
 - Android private API は OS バージョンで変わる可能性があるため、対象端末での実測が必要です。

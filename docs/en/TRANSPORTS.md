@@ -6,25 +6,7 @@
   <a href="../ja/TRANSPORTS.md">日本語</a>
 </p>
 
-raw_cast has three formal transports: HTTP/1.1 keep-alive, Raw TCP, and ADB stdout.
-
-## HTTP/1.1 Keep-Alive
-
-HTTP is the default entry point. The default port is 53516:
-
-```shell
-adb forward tcp:53516 tcp:53516
-adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --port=53516
-```
-
-Endpoints:
-
-| Path | Contents |
-| --- | --- |
-| `/screenshot` | One raw, PNG, or WEBP frame; metadata is returned in `X-Frame-*` headers |
-| `/preview` | One image frame, PNG by default, suitable for browser viewing |
-| `/stream` | `application/x-raw-cast-frames` chunked stream; each chunk is one RC01 frame |
+raw_cast primarily uses Raw TCP and ADB stdout. HTTP/1.1 keep-alive is only for browser preview, troubleshooting, and debug streaming.
 
 ## Raw TCP
 
@@ -51,14 +33,37 @@ stdout mode does not need port forwarding and is useful for automation and local
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=30 \
+    2>/dev/null
 ```
 
-The host should read the `adb shell` child process stdout pipe directly. The output is an 8-byte banner followed by continuous RC01 frames; stderr is used only for logs.
+> **Important: never merge stderr into stdout.** stdout is the binary channel containing the 8-byte banner and continuous RC01 frames; stderr must be discarded or read separately as logs.
+
+## HTTP/1.1 Keep-Alive
+
+HTTP is for debugging only. The default port is 53516:
+
+```shell
+adb forward tcp:53516 tcp:53516
+adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main --port=53516
+```
+
+Endpoints:
+
+| Path | Contents |
+| --- | --- |
+| `/screenshot` | One `rgb565/rgba`, PNG, or WEBP frame; metadata is returned in `X-Frame-*` headers |
+| `/preview` | One image frame, PNG by default, suitable for browser viewing |
+| `/stream` | `application/x-raw-cast-frames` chunked debug stream; each chunk is one RC01 frame |
+
+The HTTP channel is convenient for browsers and standard-client troubleshooting, but it is not the default channel for high-frequency benchmarks.
 
 ## Parameters
 
-All formal transports share these parameters:
+Raw TCP, ADB stdout, and the HTTP debug channel share these parameters:
 
 | Parameter | Values | Description |
 | --- | --- | --- |
@@ -72,7 +77,7 @@ All formal transports share these parameters:
 
 | Scenario | Recommended transport |
 | --- | --- |
-| Browser preview | HTTP `/preview` |
-| Standard HTTP client integration | HTTP `/screenshot` or `/stream` |
 | Real-time OpenCV processing | Raw TCP `format=rgb565` |
 | Automation pipeline | ADB stdout |
+| Browser preview | HTTP `/preview` |
+| Standard HTTP client debugging | HTTP `/screenshot` or `/stream` |

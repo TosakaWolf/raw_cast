@@ -42,9 +42,43 @@ adb forward tcp:53517 tcp:53517
 - For manual debugging with a fixed port, you may run `adb forward tcp:53517 tcp:53517` first and start with `--port-retry=1` to avoid automatic device-side port changes.
 - For benchmarks, initialize each `transport + pixel format + compression` stream once, warm it up, then measure continuous frame reads. Stop the reader, forward, and remote process after each combination.
 
-### HTTP And stdout Streams
+### stdout And HTTP Debug Streams
 
-HTTP debug preview:
+ADB stdout binary stream. stdout mode opens no network port. stdout is the pure RC01 binary stream and does not print `PID/BIND/READY`.
+
+> **Important: never merge stderr into stdout.** stdout is the binary frame channel; stderr must be discarded or read separately as logs.
+
+```shell
+adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=120 \
+    --compress=none \
+    2>/dev/null'
+```
+
+Enable LZ4 or capture one frame:
+
+```shell
+adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --mode=stdout \
+    --format=rgb565 \
+    --fps=120 \
+    --compress=lz4 \
+    2>/dev/null'
+
+adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
+    app_process / ink.mol.raw_cast.Main \
+    --mode=stdout \
+    --format=rgb565 \
+    --oneshot \
+    --compress=none \
+    2>/dev/null'
+```
+
+HTTP is only for browser preview and debug streaming:
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
@@ -55,24 +89,16 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 adb forward tcp:53516 tcp:53516
 adb forward tcp:53517 tcp:53517
 
-# HTTP stream still recommends rgb565 by default. LZ4 is optional.
+# HTTP debug stream should still use rgb565. LZ4 is optional.
 # http://127.0.0.1:53516/stream?format=rgb565&fps=120&compress=none
 # http://127.0.0.1:53516/stream?format=rgb565&fps=120&compress=lz4
-```
-
-ADB stdout binary stream. stdout mode opens no network port. stdout is the pure RC01 binary stream and does not print `PID/BIND/READY`; never merge stderr into stdout.
-
-```shell
-adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol.raw_cast.Main --mode=stdout --format=rgb565 --fps=120 --compress=none 2>/dev/null'
-adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol.raw_cast.Main --mode=stdout --format=rgb565 --fps=120 --compress=lz4 2>/dev/null'
-adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol.raw_cast.Main --mode=stdout --format=rgb565 --oneshot --compress=none 2>/dev/null'
 ```
 
 ## Optional Parameters
 
 ### Launch options
 
-Launch options are passed to `app_process`. In network mode, usually configure only ports; pixel format, FPS, and compression are normally selected by the Raw TCP request line or HTTP query. stdout mode uses the capture options directly.
+Launch options are passed to `app_process`. In network mode, usually configure only ports; pixel format, FPS, and compression are normally selected by the Raw TCP request line. HTTP query parameters are for the debug channel. stdout mode uses the capture options directly.
 
 | Option | Common | Default | Values | Notes |
 | --- | --- | --- | --- | --- |
@@ -90,7 +116,7 @@ Launch options are passed to `app_process`. In network mode, usually configure o
 
 ### Stream / screenshot request parameters
 
-Raw TCP sends one whitespace-separated `key=value` line after connecting; HTTP uses a query string. All modes should default to `format=rgb565`, with optional `compress=lz4`.
+Raw TCP sends one whitespace-separated `key=value` line after connecting; the HTTP debug channel uses a query string. Use `format=rgb565` by default, with optional `compress=lz4`.
 
 | Parameter | Common | Default | Values | Applies to | Notes |
 | --- | --- | --- | --- | --- | --- |
@@ -117,9 +143,9 @@ For benchmarks, initialize each `transport + pixel format + compression` stream 
 
 | Transport | Entry | Contents |
 | --- | --- | --- |
-| HTTP/1.1 keep-alive | `--port=PORT` | `/screenshot`, `/preview`, `/stream` |
 | Raw TCP | `--tcp=PORT` | Continuous RC01 frames after an 8-byte banner |
 | ADB stdout | `--mode=stdout` | Continuous RC01 frames on stdout after an 8-byte banner |
+| HTTP/1.1 keep-alive | `--port=PORT` | Debug `/screenshot`, `/preview`, `/stream` |
 
 | `format=` | Protocol id | Bytes/pixel | Use |
 | --- | ---: | ---: | --- |
@@ -132,14 +158,14 @@ For benchmarks, initialize each `transport + pixel format + compression` stream 
 
 ## Documents
 
-| Document | Contents |
+| Document | Link |
 | --- | --- |
-| [CLI.md](CLI.md) | Command-line options, stdout status lines, launch examples |
-| [TRANSPORTS.md](TRANSPORTS.md) | HTTP/1.1 keep-alive, Raw TCP, ADB stdout |
-| [PROTOCOL.md](PROTOCOL.md) | RC01 frame format, format ids, LZ4 rules |
-| [INTEGRATION.md](INTEGRATION.md) | Python, Go, Node.js, and Java integration notes |
-| [PERFORMANCE.md](PERFORMANCE.md) | Format, transport, and compression tradeoffs |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common launch, connection, and parsing issues |
+| Command-line options, stdout status lines, launch examples | [CLI.md](CLI.md) |
+| Raw TCP, stdout, HTTP debug channel | [TRANSPORTS.md](TRANSPORTS.md) |
+| RC01 frame format, format ids, LZ4 rules | [PROTOCOL.md](PROTOCOL.md) |
+| Python, Go, Node.js, and Java integration notes | [INTEGRATION.md](INTEGRATION.md) |
+| Format, transport, and compression tradeoffs | [PERFORMANCE.md](PERFORMANCE.md) |
+| Common launch, connection, and parsing issues | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
 
 ## Compatibility
 

@@ -6,9 +6,9 @@
   <a href="../ja/PROTOCOL.md">日本語</a>
 </p>
 
-本文档定义 raw_cast 的 RC01 二进制帧。Raw TCP、HTTP `/stream` 和 ADB stdout 都使用同一个帧头，客户端可以复用同一套解析代码。
+本文档定义 raw_cast 的 RC01 二进制帧。Raw TCP、ADB stdout 和 HTTP 调试 `/stream` 都使用同一个帧头，客户端可以复用同一套解析代码。
 
-HTTP `/screenshot` 和 `/preview` 直接返回 payload；尺寸、格式等元信息放在响应头。HTTP `/stream` 不写 banner，响应体是 chunked 流，每个 chunk 是完整的 RC01 帧。
+HTTP 调试 `/screenshot` 和 `/preview` 直接返回 payload；尺寸、格式等元信息放在响应头。HTTP 调试 `/stream` 不写 banner，响应体是 chunked 流，每个 chunk 是完整的 RC01 帧。
 
 ## Banner
 
@@ -20,7 +20,7 @@ offset  size  field
 4       4     protocol_version = 1, little-endian uint32
 ```
 
-HTTP `/stream` 没有 banner。
+HTTP 调试 `/stream` 没有 banner。
 
 ## RC01 帧头
 

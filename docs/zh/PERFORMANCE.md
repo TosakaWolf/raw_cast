@@ -24,11 +24,11 @@ raw_cast 的耗时主要来自四部分：截图、像素转换、编码或压�
 
 | 传输 | 协议开销 | 优点 | 建议 |
 | --- | --- | --- | --- |
-| ADB stdout | 最低 | 不经过端口转发 | 自动化、本机程序 |
 | Raw TCP | 低 | 简单、稳定、易解析 | OpenCV、推理管线 |
-| HTTP/1.1 keep-alive | 中 | 标准客户端、浏览器预览、易集成 | 普通应用集成、单帧截图、长连接取流 |
+| ADB stdout | 最低 | 不经过端口转发 | 自动化、本机程序 |
+| HTTP/1.1 keep-alive | 中 | 标准客户端、浏览器预览、易集成 | 浏览器预览和调试取流 |
 
-HTTP `/stream` 使用长连接和 chunked response，避免每帧重新建连。它比 Raw TCP 多 HTTP chunk 边界和响应头开销，但换来更好的通用客户端兼容性。
+HTTP `/stream` 使用长连接和 chunked response，避免每帧重新建连。它比 Raw TCP 多 HTTP chunk 边界和响应头开销，适合调试和标准客户端排查，不作为高频 benchmark 的默认通道。
 
 ## 实测参考
 
@@ -49,8 +49,8 @@ HTTP `/stream` 使用长连接和 chunked response，避免每帧重新建连。
 | --- | --- |
 | CV 或推理实时处理 | Raw TCP，`format=rgb565`，宿主端自行转换颜色 |
 | ADB 链路压力较大的 `rgb565/rgba` 流 | Raw TCP，`format=rgb565&compress=lz4` |
-| 标准客户端取流 | HTTP，`/stream?format=rgb565&fps=30` |
-| 无损截图 | HTTP，`/screenshot?format=png` |
+| 标准客户端调试取流 | HTTP，`/stream?format=rgb565&fps=30` |
+| 调试无损截图 | HTTP，`/screenshot?format=png` |
 | 浏览器人工预览 | `/preview?format=webp&quality=80` |
 | 自动化单帧 | stdout，`--format=rgb565 --oneshot` |
 
@@ -59,12 +59,12 @@ HTTP `/stream` 使用长连接和 chunked response，避免每帧重新建连。
 1. 先确认截图尺寸是否必要，降低分辨率通常最有效。
 2. CV 场景优先用 `rgb565` 降低传输和设备端处理压力，在宿主端转换为需要的矩阵格式。
 3. `rgb565/rgba` 未编码全帧像素负载过大时尝试 `rgb565&compress=lz4`。
-4. 标准客户端优先 HTTP；极限单路吞吐优先 Raw TCP 或 stdout。
+4. 高频取流优先 Raw TCP，其次 stdout；HTTP 仅用于调试和浏览器预览。
 5. 人工预览优先用 WEBP。
 
 ## 注意事项
 
 - `quality=100` 在支持的平台上可能走 WEBP 无损，体积和耗时都会上升。
 - PNG 无损但编码成本高，不适合高帧率预览。
-- stdout 输出是二进制流，调用方不要把日志混入 stdout。
+- stdout 输出是二进制流，调用方不要把 stderr 日志混入 stdout。
 - Android 私有接口可能在系统版本升级后变化，性能和可用性都需要实测确认。

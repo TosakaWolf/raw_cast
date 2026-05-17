@@ -6,9 +6,9 @@
   <a href="../ja/PROTOCOL.md">日本語</a>
 </p>
 
-This document defines the raw_cast RC01 binary frame. Raw TCP, HTTP `/stream`, and ADB stdout use the same frame header, so clients can share one decoder.
+This document defines the raw_cast RC01 binary frame. Raw TCP, ADB stdout, and the HTTP debug `/stream` use the same frame header, so clients can share one decoder.
 
-HTTP `/screenshot` and `/preview` return the payload directly; metadata is provided in response headers. HTTP `/stream` has no banner. Its body is a chunked stream where each chunk is one complete RC01 frame.
+HTTP debug `/screenshot` and `/preview` return the payload directly; metadata is provided in response headers. HTTP debug `/stream` has no banner. Its body is a chunked stream where each chunk is one complete RC01 frame.
 
 ## Banner
 
@@ -20,7 +20,7 @@ offset  size  field
 4       4     protocol_version = 1, little-endian uint32
 ```
 
-HTTP `/stream` does not have a banner.
+HTTP debug `/stream` does not have a banner.
 
 ## RC01 Frame Header
 
