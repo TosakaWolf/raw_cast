@@ -48,7 +48,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 
 | 引数 | 既定値 | 説明 |
 | --- | --- | --- |
-| `--format=NAME` | `rgb565` | `rgb565`、`png`、`webp` |
+| `--format=NAME` | `rgb565` | `rgb565`、`rgba`、`png`、`webp` |
 | `--width=N` | `0` | 出力幅。`0` は現在の端末サイズ |
 | `--height=N` | `0` | 出力高さ。`0` は現在の端末サイズ |
 | `--compress=lz4` | `none` | raw format のみ有効 |
