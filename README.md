@@ -1,17 +1,18 @@
 <div align="center">
+  <img src="docs/images/icon1.png" alt="raw_cast icon" width="256" height="256" >
 
-<h1>raw_cast</h1>
-
-<p>
-  <a href="./README.md">简体中文</a> ·
-  <a href="./docs/en/README.md">English</a> ·
-  <a href="./docs/ja/README.md">日本語</a>
-</p>
+# raw_cast
 
 <p>
   <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-AGPL--3.0--or--later-blue"></a>
   <a href="https://github.com/TosakaWolf/raw_cast/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/TosakaWolf/raw_cast?style=flat"></a>
   <a href="https://github.com/TosakaWolf/raw_cast/releases"><img alt="GitHub downloads" src="https://img.shields.io/github/downloads/TosakaWolf/raw_cast/total?label=downloads"></a>
+</p>
+
+<p>
+  <a href="./README.md">简体中文</a> ·
+  <a href="./docs/en/README.md">English</a> ·
+  <a href="./docs/ja/README.md">日本語</a>
 </p>
 
 <p>
