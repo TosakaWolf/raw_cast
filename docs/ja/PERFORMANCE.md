@@ -1,4 +1,4 @@
-# Performance
+﻿# Performance
 
 <p>
   <a href="../zh/PERFORMANCE.md">简体中文</a> ·
@@ -13,7 +13,6 @@ raw_cast の遅延は主に capture、pixel conversion、encoding/compression、
 | Format | 帯域 | CPU cost | 用途 |
 | --- | --- | --- | --- |
 | `rgb565` | 低 | 低 | 低帯域の raw data |
-| `bgra` | 高 | 低 | OpenCV リアルタイム処理 |
 | `png` | 低から中 | 高 | 無劣化の単一フレーム、比較テスト |
 | `webp` | 低 | 中 | ブラウザプレビュー、低帯域の単一フレーム |
 | raw + LZ4 | 中 | 中 | 弱い link でのリアルタイム raw stream |
@@ -34,17 +33,17 @@ HTTP `/stream` は persistent connection と chunked response を使うため、
 
 | 場面 | パラメータ |
 | --- | --- |
-| OpenCV リアルタイム処理 | Raw TCP、`format=bgra` |
+| CV / 推論のリアルタイム処理 | Raw TCP、`format=rgb565`、ホスト側で色変換 |
 | 弱い link の raw stream | Raw TCP、`format=rgb565&compress=lz4` |
-| 標準 client の stream | HTTP、`/stream?format=bgra&fps=30` |
+| 標準 client の stream | HTTP、`/stream?format=rgb565&fps=30` |
 | 無劣化スクリーンショット | HTTP、`/screenshot?format=png` |
 | ブラウザ preview | `/preview?format=webp&quality=80` |
-| 自動化 one-shot | stdout、`--format=bgra --oneshot` |
+| 自動化 one-shot | stdout、`--format=rgb565 --oneshot` |
 
 ## Tuning Order
 
 1. 必要な capture size か確認します。解像度を下げるのが最も効くことが多いです。
-2. OpenCV では channel shuffle を減らすため `bgra` を優先します。
+2. CV では `rgb565` を優先して端末側の処理と転送量を抑え、必要な matrix format へはホスト側で変換します。
 3. 帯域が足りない場合は `rgb565` または raw + LZ4 を試します。
 4. 標準 client では HTTP、単一 stream の最大 throughput では Raw TCP または stdout を優先します。
 5. 手動 preview では WEBP を優先します。

@@ -1,4 +1,4 @@
-# Transports
+﻿# Transports
 
 <p>
   <a href="../zh/TRANSPORTS.md">简体中文</a> ·
@@ -39,7 +39,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 接続後、クライアントは ASCII のリクエスト行を 1 行送ります。
 
 ```text
-format=bgra fps=30 width=0 height=0 compress=none
+format=rgb565 fps=30 width=0 height=0 compress=none
 ```
 
 サーバーは 8 バイト banner の後、RC01 frames を連続して返します。`fps=0` は 1 フレームだけ送って接続を閉じます。
@@ -51,7 +51,7 @@ stdout モードはポート転送が不要で、自動化やローカルプロ�
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=bgra --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 > stream.bin
 ```
 
 出力は 8 バイト banner + 連続 RC01 frames です。stderr はログ専用です。
@@ -62,7 +62,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 
 | パラメータ | 値 | 説明 |
 | --- | --- | --- |
-| `format` | `rgb565` `rgba` `bgra` `png` `webp` | 出力形式 |
+| `format` | `rgb565` `rgba` `png` `webp` | 出力形式 |
 | `width` / `height` | 整数 | `0` は現在の端末サイズ |
 | `compress` | `lz4` または `none` | raw format のみ有効 |
 | `quality` | `1..100` | WEBP 品質 |
@@ -74,5 +74,5 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 | --- | --- |
 | ブラウザで確認 | HTTP `/preview` |
 | 標準 HTTP クライアント連携 | HTTP `/screenshot` または `/stream` |
-| OpenCV リアルタイム処理 | Raw TCP `format=bgra` |
+| OpenCV リアルタイム処理 | Raw TCP `format=rgb565` |
 | 自動化パイプライン | ADB stdout |

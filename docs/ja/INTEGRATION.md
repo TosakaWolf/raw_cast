@@ -1,4 +1,4 @@
-# Integration
+﻿# Integration
 
 <p>
   <a href="../zh/INTEGRATION.md">简体中文</a> ·
@@ -43,7 +43,7 @@ GET http://127.0.0.1:53516/preview?format=webp&quality=80
 stream endpoint：
 
 ```text
-GET http://127.0.0.1:53516/stream?format=bgra&fps=30
+GET http://127.0.0.1:53516/stream?format=rgb565&fps=30
 ```
 
 `/stream` では HTTP クライアントが通常 chunked transfer encoding を処理します。アプリケーション側は RC01 の `payload_size` を使って frame を切り出します。
@@ -53,7 +53,7 @@ GET http://127.0.0.1:53516/stream?format=bgra&fps=30
 Raw TCP ポートに接続した後、ASCII の 1 行を送ります。
 
 ```text
-format=bgra fps=30 width=0 height=0 compress=none
+format=rgb565 fps=30 width=0 height=0 compress=none
 ```
 
 その後 8 バイト banner を読み、[PROTOCOL.md](PROTOCOL.md) に従って連続 RC01 frames を解析します。
@@ -65,7 +65,7 @@ stdout モードは呼び出し側が binary stream を直接消費する場合�
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=bgra --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 > stream.bin
 ```
 
 このモードは `PID` / `BIND` / `READY` テキストを出力しません。

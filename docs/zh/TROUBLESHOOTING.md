@@ -1,4 +1,4 @@
-# Troubleshooting
+﻿# Troubleshooting
 
 <p>
   <a href="./TROUBLESHOOTING.md">简体中文</a> ·
@@ -76,7 +76,7 @@ http://127.0.0.1:53516/preview
 支持的格式只有：
 
 ```text
-rgb565, rgba, bgra, png, webp
+rgb565, rgba, png, webp
 ```
 
 不支持的格式会返回 400 或在设备日志中记录错误，不会静默退回默认格式。
@@ -97,22 +97,12 @@ http://127.0.0.1:53516/preview?format=webp&quality=80
 
 如果预览也异常，再查看 logcat 中的 `ScreenCaptor` 和 `raw_cast` 日志。
 
-## 颜色通道不对
-
-OpenCV 推荐使用：
-
-```text
-format=bgra
-```
-
-`rgba` 是 Android 原生顺序，OpenCV 中通常需要转换。
-
 ## 帧率不达标
 
 排查顺序：
 
 1. 降低分辨率：加 `width=` 和 `height=`。
-2. CV 场景使用 Raw TCP + `format=bgra`。
+2. CV 场景使用 Raw TCP + `format=rgb565`，宿主端按需要转换为 BGR/RGB 矩阵。
 3. 单路极限性能使用 Raw TCP 或 stdout。
 4. 带宽不足时尝试 `format=rgb565&compress=lz4`。
 5. 确认主机端消费速度足够快。

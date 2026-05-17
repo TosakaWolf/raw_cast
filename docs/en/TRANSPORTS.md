@@ -1,4 +1,4 @@
-# Transports
+﻿# Transports
 
 <p>
   <a href="../zh/TRANSPORTS.md">简体中文</a> ·
@@ -39,7 +39,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 After connecting, the client writes one ASCII request line:
 
 ```text
-format=bgra fps=30 width=0 height=0 compress=none
+format=rgb565 fps=30 width=0 height=0 compress=none
 ```
 
 The server writes an 8-byte banner and then continuous RC01 frames. `fps=0` sends one frame and closes the connection.
@@ -51,7 +51,7 @@ stdout mode does not need port forwarding and is useful for automation and local
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=bgra --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 > stream.bin
 ```
 
 The output is an 8-byte banner followed by continuous RC01 frames. stderr is used only for logs.
@@ -62,7 +62,7 @@ All formal transports share these parameters:
 
 | Parameter | Values | Description |
 | --- | --- | --- |
-| `format` | `rgb565` `rgba` `bgra` `png` `webp` | Output format |
+| `format` | `rgb565` `rgba` `png` `webp` | Output format |
 | `width` / `height` | integer | `0` means current device size |
 | `compress` | `lz4` or `none` | Only applies to raw formats |
 | `quality` | `1..100` | WEBP quality |
@@ -74,5 +74,5 @@ All formal transports share these parameters:
 | --- | --- |
 | Browser preview | HTTP `/preview` |
 | Standard HTTP client integration | HTTP `/screenshot` or `/stream` |
-| Real-time OpenCV processing | Raw TCP `format=bgra` |
+| Real-time OpenCV processing | Raw TCP `format=rgb565` |
 | Automation pipeline | ADB stdout |

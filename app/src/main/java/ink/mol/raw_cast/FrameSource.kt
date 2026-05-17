@@ -22,7 +22,6 @@ class FrameSource {
     private val displayUtil = DisplayUtil()
     private val seq = AtomicInteger(0)
     private val directBuffer = object : ThreadLocal<ByteBuffer>() {}
-    private val slowFrameThresholdMs = 1_000L
 
     @Volatile private var fallbackWidth: Int = 0
     @Volatile private var fallbackHeight: Int = 0
@@ -56,7 +55,6 @@ class FrameSource {
     }
 
     fun capture(req: CaptureRequest): EncodedFrame {
-        val started = System.nanoTime()
         var (w, h) = resolveSize(req)
         // Match physical orientation just like DroidCast_raw does.
         val rotation = displayUtil.getScreenRotation()
@@ -66,23 +64,12 @@ class FrameSource {
 
         val bitmap: Bitmap = ScreenCaptor.screenshot(w, h, req.format.surfacePixelFormat())
             ?: error("ScreenCaptor returned null bitmap")
-        val screenshotMs = (System.nanoTime() - started) / 1_000_000
         try {
-            val frame = if (req.format.isRaw) {
+            return if (req.format.isRaw) {
                 encodeRaw(bitmap, w, h, req)
             } else {
                 encodeCompressed(bitmap, w, h, req)
             }
-            val totalMs = (System.nanoTime() - started) / 1_000_000
-            if (totalMs >= slowFrameThresholdMs) {
-                Log.w(
-                    "raw_cast",
-                    "slow capture seq=${frame.seq} format=${frame.format} lz4=${frame.lz4} " +
-                        "size=${w}x${h} payload=${frame.data.size}B " +
-                        "screenshot=${screenshotMs}ms encode=${totalMs - screenshotMs}ms total=${totalMs}ms"
-                )
-            }
-            return frame
         } finally {
             bitmap.recycle()
         }

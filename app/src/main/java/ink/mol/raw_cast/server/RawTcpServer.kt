@@ -25,7 +25,7 @@ private const val TAG = "raw_cast"
  *
  *   1. Client opens a TCP connection.
  *   2. Client writes one ASCII request line terminated by \n, e.g.:
- *        format=bgra fps=30 width=0 height=0 compress=none\n
+ *        format=rgb565 fps=30 width=0 height=0 compress=none\n
  *      (whitespace separated key=value pairs; unknown keys ignored).
  *      An empty line means "use defaults" (rgb565, 30 fps, native size).
  *   3. Server writes the 8-byte banner: bytes 'R','C','0','1', then a

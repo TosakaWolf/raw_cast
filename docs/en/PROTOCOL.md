@@ -1,4 +1,4 @@
-# Protocol
+﻿# Protocol
 
 <p>
   <a href="../zh/PROTOCOL.md">简体中文</a> ·
@@ -54,11 +54,10 @@ offset  size  field
 | ---: | --- | --- | ---: | --- |
 | 1 | `RGB565` | raw | 2 | Packed RGB565 |
 | 2 | `RGBA8888` | raw | 4 | RGBA channel order |
-| 3 | `BGRA8888` | raw | 4 | BGRA channel order |
 | 11 | `PNG` | image | - | PNG byte stream |
 | 12 | `WEBP` | image | - | WEBP byte stream |
 
-PNG and WEBP ids are not renumbered to preserve wire compatibility.
+Format id `3` is reserved and unused. PNG and WEBP ids are not renumbered to preserve wire compatibility.
 
 ## LZ4
 
@@ -71,7 +70,7 @@ For PNG or WEBP, the server ignores `compress=lz4`.
 After connecting to the Raw TCP port, the client sends one ASCII line:
 
 ```text
-format=bgra fps=30 width=0 height=0 compress=none
+format=rgb565 fps=30 width=0 height=0 compress=none
 ```
 
 Parameters are space-separated. Unknown parameters are ignored. Unsupported formats end the connection and are logged on the device.
@@ -83,7 +82,7 @@ Parameters are space-separated. Unknown parameters are ignored. Unsupported form
 ```text
 X-Frame-Width: 1080
 X-Frame-Height: 2400
-X-Frame-Format: RAW_BGRA8888
+X-Frame-Format: RAW_RGB565
 X-Frame-Lz4: 0
 X-Frame-Seq: 1
 ```

@@ -1,4 +1,4 @@
-# Protocol
+﻿# Protocol
 
 <p>
   <a href="../zh/PROTOCOL.md">简体中文</a> ·
@@ -54,11 +54,10 @@ offset  size  field
 | ---: | --- | --- | ---: | --- |
 | 1 | `RGB565` | raw | 2 | packed RGB565 |
 | 2 | `RGBA8888` | raw | 4 | RGBA channel order |
-| 3 | `BGRA8888` | raw | 4 | BGRA channel order |
 | 11 | `PNG` | image | - | PNG byte stream |
 | 12 | `WEBP` | image | - | WEBP byte stream |
 
-PNG と WEBP の id は wire compatibility のため再採番しません。
+format id `3` は予約済みで未使用です。PNG と WEBP の id は wire compatibility のため再採番しません。
 
 ## LZ4
 
@@ -71,7 +70,7 @@ PNG または WEBP では、サーバーは `compress=lz4` を無視します。
 Raw TCP ポートに接続した後、クライアントは ASCII の 1 行を送ります。
 
 ```text
-format=bgra fps=30 width=0 height=0 compress=none
+format=rgb565 fps=30 width=0 height=0 compress=none
 ```
 
 パラメータは空白区切りです。未知のパラメータは無視されます。未対応 format は接続終了と端末ログへの記録になります。
@@ -83,7 +82,7 @@ format=bgra fps=30 width=0 height=0 compress=none
 ```text
 X-Frame-Width: 1080
 X-Frame-Height: 2400
-X-Frame-Format: RAW_BGRA8888
+X-Frame-Format: RAW_RGB565
 X-Frame-Lz4: 0
 X-Frame-Seq: 1
 ```

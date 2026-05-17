@@ -37,8 +37,6 @@ private const val TAG = "raw_cast"
 class StdoutSink(
     private val source: FrameSource,
 ) {
-    private val slowFrameThresholdMs = 1_000L
-
     fun run(req: CaptureRequest, fps: Int, oneShot: Boolean) {
         // Use the raw FD so nothing the JVM may have layered on top of System.out
         // gets in the way (e.g. a PrintStream that converts \n -> \r\n on Windows
@@ -61,20 +59,9 @@ class StdoutSink(
             val periodMs = (1000.0 / fps).toLong().coerceAtLeast(1L)
             while (true) {
                 val started = System.nanoTime()
-                val captureStarted = started
                 val f = source.capture(req)
-                val captureMs = (System.nanoTime() - captureStarted) / 1_000_000
-                val writeStarted = System.nanoTime()
                 FrameMux.writeTo(out, f)
                 out.flush()
-                val writeMs = (System.nanoTime() - writeStarted) / 1_000_000
-                if (captureMs >= slowFrameThresholdMs || writeMs >= slowFrameThresholdMs) {
-                    Log.w(
-                        TAG,
-                        "slow stdout frame seq=${f.seq} format=${f.format} lz4=${f.lz4} " +
-                            "payload=${f.data.size}B capture=${captureMs}ms write=${writeMs}ms"
-                    )
-                }
                 val elapsedMs = (System.nanoTime() - started) / 1_000_000
                 val sleep = periodMs - elapsedMs
                 if (sleep > 0) try { Thread.sleep(sleep) } catch (_: InterruptedException) { return }

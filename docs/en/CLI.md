@@ -1,4 +1,4 @@
-# CLI
+﻿# CLI
 
 <p>
   <a href="../zh/CLI.md">简体中文</a> ·
@@ -30,7 +30,7 @@ stdout mode:
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=bgra --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 > stream.bin
 ```
 
 ## Port Options
@@ -48,7 +48,7 @@ Network mode must enable HTTP or Raw TCP. stdout mode ignores network ports.
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `--format=NAME` | `rgb565` | `rgb565`, `rgba`, `bgra`, `png`, `webp` |
+| `--format=NAME` | `rgb565` | `rgb565`, `rgba`, `png`, `webp` |
 | `--width=N` | `0` | Output width; `0` uses the current device size |
 | `--height=N` | `0` | Output height; `0` uses the current device size |
 | `--compress=lz4` | `none` | Only applies to raw formats |

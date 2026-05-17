@@ -1,4 +1,4 @@
-# Performance
+﻿# Performance
 
 <p>
   <a href="../zh/PERFORMANCE.md">简体中文</a> ·
@@ -13,7 +13,6 @@ raw_cast latency mainly comes from capture, pixel conversion, encoding or compre
 | Format | Bandwidth | CPU cost | Best for |
 | --- | --- | --- | --- |
 | `rgb565` | Low | Low | Low-bandwidth raw data |
-| `bgra` | High | Low | Real-time OpenCV processing |
 | `png` | Low to medium | High | Lossless one-shot capture and comparisons |
 | `webp` | Low | Medium | Browser preview and low-bandwidth one-shot capture |
 | raw + LZ4 | Medium | Medium | Real-time raw streams over weaker links |
@@ -34,17 +33,17 @@ HTTP `/stream` uses a persistent connection and chunked response, so it does not
 
 | Scenario | Parameters |
 | --- | --- |
-| Real-time OpenCV | Raw TCP, `format=bgra` |
+| Real-time CV or inference | Raw TCP, `format=rgb565`, convert color on the host side |
 | Weak-link raw stream | Raw TCP, `format=rgb565&compress=lz4` |
-| Standard client streaming | HTTP, `/stream?format=bgra&fps=30` |
+| Standard client streaming | HTTP, `/stream?format=rgb565&fps=30` |
 | Lossless screenshot | HTTP, `/screenshot?format=png` |
 | Browser preview | `/preview?format=webp&quality=80` |
-| Automation one-shot | stdout, `--format=bgra --oneshot` |
+| Automation one-shot | stdout, `--format=rgb565 --oneshot` |
 
 ## Tuning Order
 
 1. Check whether the requested capture size is necessary; lowering resolution usually helps most.
-2. For OpenCV, prefer `bgra` to reduce channel shuffling.
+2. For CV workloads, prefer `rgb565` to reduce device-side work and transfer size, then convert to the required matrix format on the host.
 3. If bandwidth is limited, try `rgb565` or raw + LZ4.
 4. Prefer HTTP for standard clients; prefer Raw TCP or stdout for maximum single-stream throughput.
 5. Prefer WEBP for manual previews.

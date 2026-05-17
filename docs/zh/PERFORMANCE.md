@@ -1,4 +1,4 @@
-# Performance
+﻿# Performance
 
 <p>
   <a href="./PERFORMANCE.md">简体中文</a> ·
@@ -13,7 +13,6 @@ raw_cast 的耗时主要来自四部分：截图、像素转换、编码或压�
 | 格式 | 带宽 | CPU 成本 | 适合场景 |
 | --- | --- | --- | --- |
 | `rgb565` | 低 | 低 | 低带宽 raw 数据 |
-| `bgra` | 高 | 低 | OpenCV 实时处理 |
 | `png` | 低到中 | 高 | 无损单帧、对比测试 |
 | `webp` | 低 | 中 | 浏览器预览、低带宽单帧 |
 | raw + LZ4 | 中 | 中 | 弱链路下的实时 raw 流 |
@@ -34,17 +33,17 @@ HTTP `/stream` 使用长连接和 chunked response，避免每帧重新建连。
 
 | 场景 | 推荐参数 |
 | --- | --- |
-| OpenCV 实时处理 | Raw TCP，`format=bgra` |
+| CV 或推理实时处理 | Raw TCP，`format=rgb565`，宿主端自行转换颜色 |
 | 弱链路 raw 流 | Raw TCP，`format=rgb565&compress=lz4` |
-| 标准客户端取流 | HTTP，`/stream?format=bgra&fps=30` |
+| 标准客户端取流 | HTTP，`/stream?format=rgb565&fps=30` |
 | 无损截图 | HTTP，`/screenshot?format=png` |
 | 浏览器人工预览 | `/preview?format=webp&quality=80` |
-| 自动化单帧 | stdout，`--format=bgra --oneshot` |
+| 自动化单帧 | stdout，`--format=rgb565 --oneshot` |
 
 ## 调优顺序
 
 1. 先确认截图尺寸是否必要，降低分辨率通常最有效。
-2. OpenCV 优先用 `bgra`，减少通道重排。
+2. CV 场景优先用 `rgb565` 降低传输和设备端处理压力，在宿主端转换为需要的矩阵格式。
 3. 带宽不足时尝试 `rgb565` 或 raw + LZ4。
 4. 标准客户端优先 HTTP；极限单路吞吐优先 Raw TCP 或 stdout。
 5. 人工预览优先用 WEBP。

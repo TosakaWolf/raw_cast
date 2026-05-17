@@ -1,4 +1,4 @@
-# Troubleshooting
+﻿# Troubleshooting
 
 <p>
   <a href="../zh/TROUBLESHOOTING.md">简体中文</a> ·
@@ -76,7 +76,7 @@ stream では `/stream` を使い、レスポンス body を RC01 frames とし�
 対応 format：
 
 ```text
-rgb565, rgba, bgra, png, webp
+rgb565, rgba, png, webp
 ```
 
 未対応 format は 400 を返すか端末ログに記録されます。デフォルトへ静かに戻ることはありません。
@@ -97,22 +97,12 @@ http://127.0.0.1:53516/preview?format=webp&quality=80
 
 preview も異常な場合は、logcat の `ScreenCaptor` と `raw_cast` ログを確認します。
 
-## 色チャンネルが違う
-
-OpenCV では次を推奨します。
-
-```text
-format=bgra
-```
-
-`rgba` は Android native order で、OpenCV では変換が必要になることがあります。
-
 ## フレームレートが低い
 
 確認順：
 
 1. `width=` と `height=` で解像度を下げます。
-2. CV では Raw TCP + `format=bgra` を使います。
+2. CV では Raw TCP + `format=rgb565` を使い、BGR/RGB matrix への変換はホスト側で行います。
 3. 単一 stream の最大性能では Raw TCP または stdout を使います。
 4. 帯域不足なら `format=rgb565&compress=lz4` を試します。
 5. ホスト側の消費速度が十分か確認します。

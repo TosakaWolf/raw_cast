@@ -1,4 +1,4 @@
-# Integration
+﻿# Integration
 
 <p>
   <a href="../zh/INTEGRATION.md">简体中文</a> ·
@@ -43,7 +43,7 @@ GET http://127.0.0.1:53516/preview?format=webp&quality=80
 Streaming endpoint:
 
 ```text
-GET http://127.0.0.1:53516/stream?format=bgra&fps=30
+GET http://127.0.0.1:53516/stream?format=rgb565&fps=30
 ```
 
 For `/stream`, the HTTP client usually handles chunked transfer encoding. Application code then reads RC01 frames using the `payload_size` field.
@@ -53,7 +53,7 @@ For `/stream`, the HTTP client usually handles chunked transfer encoding. Applic
 After connecting to the Raw TCP port, send one ASCII request line:
 
 ```text
-format=bgra fps=30 width=0 height=0 compress=none
+format=rgb565 fps=30 width=0 height=0 compress=none
 ```
 
 Then read the 8-byte banner and parse continuous RC01 frames as described in [PROTOCOL.md](PROTOCOL.md).
@@ -65,7 +65,7 @@ stdout mode is useful when the caller directly consumes the binary stream:
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=bgra --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 > stream.bin
 ```
 
 This mode does not print `PID` / `BIND` / `READY` text.

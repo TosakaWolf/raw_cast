@@ -1,4 +1,4 @@
-# Protocol
+﻿# Protocol
 
 <p>
   <a href="./PROTOCOL.md">简体中文</a> ·
@@ -54,11 +54,10 @@ offset  size  field
 | ---: | --- | --- | ---: | --- |
 | 1 | `RGB565` | raw | 2 | 紧凑 RGB565 |
 | 2 | `RGBA8888` | raw | 4 | RGBA 通道顺序 |
-| 3 | `BGRA8888` | raw | 4 | BGRA 通道顺序 |
 | 11 | `PNG` | image | - | PNG 字节流 |
 | 12 | `WEBP` | image | - | WEBP 字节流 |
 
-PNG 和 WEBP 的 id 不重新编号，保持 wire compatibility。
+格式 id `3` 已保留不用。PNG 和 WEBP 的 id 不重新编号，保持 wire compatibility。
 
 ## LZ4
 
@@ -71,7 +70,7 @@ LZ4 只用于 raw payload。帧头本身不压缩，`payload_size` 表示压缩�
 客户端连接 Raw TCP 端口后发送一行 ASCII 参数：
 
 ```text
-format=bgra fps=30 width=0 height=0 compress=none
+format=rgb565 fps=30 width=0 height=0 compress=none
 ```
 
 参数用空格分隔，未知参数忽略。不支持的格式会导致连接结束并在设备日志中记录错误。
@@ -83,7 +82,7 @@ format=bgra fps=30 width=0 height=0 compress=none
 ```text
 X-Frame-Width: 1080
 X-Frame-Height: 2400
-X-Frame-Format: RAW_BGRA8888
+X-Frame-Format: RAW_RGB565
 X-Frame-Lz4: 0
 X-Frame-Seq: 1
 ```

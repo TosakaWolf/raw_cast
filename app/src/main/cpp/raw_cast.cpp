@@ -31,14 +31,12 @@
 namespace fmt {
 constexpr int RAW_RGB565   = 1;
 constexpr int RAW_RGBA8888 = 2;
-constexpr int RAW_BGRA8888 = 3;
 }
 
 static inline size_t bpp_for(int format) {
     switch (format) {
         case fmt::RAW_RGB565:   return 2;
         case fmt::RAW_RGBA8888: return 4;
-        case fmt::RAW_BGRA8888: return 4;
         default:                return 0;
     }
 }
@@ -63,8 +61,28 @@ struct ThreadScratch {
 
 static thread_local ThreadScratch g_scratch;
 
-// Convert an RGBA_8888 source plane (with given byte stride) into the requested
-// destination format, packed tightly into `dst`.
+// Convert an RGBA_8888 source plane into packed RGB565.
+static int rgba8888_to_rgb565(const uint8_t* src, size_t src_stride_bytes,
+                              uint8_t* dst, size_t dst_capacity,
+                              uint32_t width, uint32_t height) {
+    const size_t pixel_count = static_cast<size_t>(width) * height;
+    const size_t need = pixel_count * bpp_for(fmt::RAW_RGB565);
+    CHECKED(-1, need > 0 && need <= dst_capacity,
+            "dst buffer too small: need=%zu cap=%zu", need, dst_capacity);
+    for (size_t y = 0; y < height; ++y) {
+        const uint8_t* row = src + y * src_stride_bytes;
+        uint16_t* out = reinterpret_cast<uint16_t*>(dst + y * width * 2);
+        for (size_t x = 0; x < width; ++x) {
+            const uint8_t r = row[x * 4 + 0];
+            const uint8_t g = row[x * 4 + 1];
+            const uint8_t b = row[x * 4 + 2];
+            out[x] = static_cast<uint16_t>(((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3));
+        }
+    }
+    return static_cast<int>(need);
+}
+
+// Convert an RGBA_8888 source plane to the requested output format.
 static int convert_from_rgba8888(const uint8_t* src, size_t src_stride_bytes,
                                  uint8_t* dst, size_t dst_capacity,
                                  uint32_t width, uint32_t height,
@@ -73,21 +91,25 @@ static int convert_from_rgba8888(const uint8_t* src, size_t src_stride_bytes,
     const size_t need = pixel_count * bpp_for(target_format);
     CHECKED(-1, need > 0 && need <= dst_capacity,
             "dst buffer too small: need=%zu cap=%zu", need, dst_capacity);
-    switch (target_format) {
-        case fmt::RAW_RGBA8888:
-            raw_cast::rgba_copy_strided(src, src_stride_bytes, dst, width, height);
-            return static_cast<int>(need);
-        case fmt::RAW_BGRA8888:
-            raw_cast::rgba_to_bgra_strided(src, src_stride_bytes, dst, width, height);
-            return static_cast<int>(need);
-        default:
-            LOGE("source RGBA8888 cannot be converted to format=%d", target_format);
-            return -1;
+    if (target_format == fmt::RAW_RGB565) {
+        return rgba8888_to_rgb565(src, src_stride_bytes, dst, dst_capacity, width, height);
     }
+    if (target_format == fmt::RAW_RGBA8888) {
+        const size_t row = static_cast<size_t>(width) * 4;
+        if (src_stride_bytes == row) {
+            std::memcpy(dst, src, row * height);
+        } else {
+            for (size_t y = 0; y < height; ++y) {
+                std::memcpy(dst + y * row, src + y * src_stride_bytes, row);
+            }
+        }
+        return static_cast<int>(need);
+    }
+    LOGE("source RGBA8888 cannot be converted to format=%d", target_format);
+    return -1;
 }
 
-// Convert an RGB_565 source plane to either packed RGB565 (memcpy) or to one of
-// the 8888 formats (cheap CPU expansion via lookup-free shift).
+// Convert an RGB_565 source plane to the requested output format.
 static int convert_from_rgb565(const uint8_t* src, size_t src_stride_bytes,
                                uint8_t* dst, size_t dst_capacity,
                                uint32_t width, uint32_t height,
@@ -100,32 +122,23 @@ static int convert_from_rgb565(const uint8_t* src, size_t src_stride_bytes,
         raw_cast::rgb565_copy_strided(src, src_stride_bytes, dst, width, height);
         return static_cast<int>(need);
     }
-    // CPU expansion path. Slow-ish but correct; only used if the GPU yields 565
-    // but the user requested an 8888 variant.
-    const size_t row_pixels = width;
-    for (size_t y = 0; y < height; ++y) {
-        const uint16_t* row = reinterpret_cast<const uint16_t*>(src + y * src_stride_bytes);
-        for (size_t x = 0; x < row_pixels; ++x) {
-            const uint16_t v = row[x];
-            const uint8_t r = static_cast<uint8_t>(((v >> 11) & 0x1F) * 255 / 31);
-            const uint8_t g = static_cast<uint8_t>(((v >> 5)  & 0x3F) * 255 / 63);
-            const uint8_t b = static_cast<uint8_t>(((v >> 0)  & 0x1F) * 255 / 31);
-            uint8_t* px;
-            switch (target_format) {
-                case fmt::RAW_RGBA8888:
-                    px = dst + (y * row_pixels + x) * 4;
-                    px[0] = r; px[1] = g; px[2] = b; px[3] = 0xFF;
-                    break;
-                case fmt::RAW_BGRA8888:
-                    px = dst + (y * row_pixels + x) * 4;
-                    px[0] = b; px[1] = g; px[2] = r; px[3] = 0xFF;
-                    break;
-                default:
-                    return -1;
+    if (target_format == fmt::RAW_RGBA8888) {
+        const size_t row_pixels = width;
+        for (size_t y = 0; y < height; ++y) {
+            const uint16_t* row = reinterpret_cast<const uint16_t*>(src + y * src_stride_bytes);
+            for (size_t x = 0; x < row_pixels; ++x) {
+                const uint16_t v = row[x];
+                uint8_t* px = dst + (y * row_pixels + x) * 4;
+                px[0] = static_cast<uint8_t>(((v >> 11) & 0x1F) * 255 / 31);
+                px[1] = static_cast<uint8_t>(((v >> 5)  & 0x3F) * 255 / 63);
+                px[2] = static_cast<uint8_t>(((v >> 0)  & 0x1F) * 255 / 31);
+                px[3] = 0xFF;
             }
         }
+        return static_cast<int>(need);
     }
-    return static_cast<int>(need);
+    LOGE("source RGB565 cannot be converted to format=%d", target_format);
+    return -1;
 }
 
 // ---------------------------------------------------------------------------

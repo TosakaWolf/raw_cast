@@ -1,4 +1,4 @@
-# Integration
+﻿# Integration
 
 <p>
   <a href="./INTEGRATION.md">简体中文</a> ·
@@ -43,7 +43,7 @@ GET http://127.0.0.1:53516/preview?format=webp&quality=80
 流式接口：
 
 ```text
-GET http://127.0.0.1:53516/stream?format=bgra&fps=30
+GET http://127.0.0.1:53516/stream?format=rgb565&fps=30
 ```
 
 读取 `/stream` 时，HTTP 客户端通常会处理 chunked 编码；应用层按 RC01 帧头中的 `payload_size` 继续切帧即可。
@@ -53,7 +53,7 @@ GET http://127.0.0.1:53516/stream?format=bgra&fps=30
 Raw TCP 客户端连接端口后，先发送一行 ASCII 参数：
 
 ```text
-format=bgra fps=30 width=0 height=0 compress=none
+format=rgb565 fps=30 width=0 height=0 compress=none
 ```
 
 随后读取 8 字节 banner，再按 [PROTOCOL.md](PROTOCOL.md) 解析连续 RC01 帧。
@@ -65,7 +65,7 @@ stdout 模式适合调用方直接消费二进制流：
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=bgra --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 > stream.bin
 ```
 
 该模式不输出 `PID` / `BIND` / `READY` 文本。

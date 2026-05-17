@@ -1,4 +1,4 @@
-# Troubleshooting
+﻿# Troubleshooting
 
 <p>
   <a href="../zh/TROUBLESHOOTING.md">简体中文</a> ·
@@ -76,7 +76,7 @@ For streaming, use `/stream` and parse the response body as RC01 frames. Standar
 Supported formats are:
 
 ```text
-rgb565, rgba, bgra, png, webp
+rgb565, rgba, png, webp
 ```
 
 Unsupported formats return 400 or are logged on the device. They do not silently fall back to the default.
@@ -97,22 +97,12 @@ http://127.0.0.1:53516/preview?format=webp&quality=80
 
 If preview is also wrong, inspect `ScreenCaptor` and `raw_cast` logs in logcat.
 
-## Wrong Color Channels
-
-For OpenCV, prefer:
-
-```text
-format=bgra
-```
-
-`rgba` is Android-native order and often needs conversion in OpenCV.
-
 ## Frame Rate Is Too Low
 
 Check in this order:
 
 1. Reduce resolution with `width=` and `height=`.
-2. For CV workloads, use Raw TCP + `format=bgra`.
+2. For CV workloads, use Raw TCP + `format=rgb565` and convert to BGR/RGB matrices on the host.
 3. For maximum single-stream throughput, use Raw TCP or stdout.
 4. If bandwidth is limited, try `format=rgb565&compress=lz4`.
 5. Confirm the host-side consumer is fast enough.

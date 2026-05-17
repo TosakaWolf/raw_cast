@@ -1,4 +1,4 @@
-# CLI
+﻿# CLI
 
 <p>
   <a href="../zh/CLI.md">简体中文</a> ·
@@ -30,7 +30,7 @@ stdout モード：
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=bgra --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 > stream.bin
 ```
 
 ## ポート引数
@@ -48,7 +48,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 
 | 引数 | 既定値 | 説明 |
 | --- | --- | --- |
-| `--format=NAME` | `rgb565` | `rgb565`、`rgba`、`bgra`、`png`、`webp` |
+| `--format=NAME` | `rgb565` | `rgb565`、`png`、`webp` |
 | `--width=N` | `0` | 出力幅。`0` は現在の端末サイズ |
 | `--height=N` | `0` | 出力高さ。`0` は現在の端末サイズ |
 | `--compress=lz4` | `none` | raw format のみ有効 |

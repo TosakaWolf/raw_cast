@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
 <h1>raw_cast</h1>
 
@@ -55,7 +55,7 @@ stdout 模式不打开网络端口，stdout 只输出 RC01 二进制流。不要
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=bgra --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 > stream.bin
 ```
 
 抓取一帧：
@@ -63,7 +63,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=bgra --oneshot > frame.bin
+    --mode=stdout --format=rgb565 --oneshot > frame.bin
 ```
 
 ## 核心能力
@@ -74,7 +74,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 | 截图路径 | **SurfaceControl + HardwareBuffer** |
 | 正式传输 | **HTTP/1.1 keep-alive**、**Raw TCP**、**ADB stdout** |
 | 浏览器查看 | HTTP `/preview` 返回单帧 PNG/WEBP 预览 |
-| 像素格式 | `RGB_565` / `RGBA_8888` / `BGRA_8888` / PNG / WEBP |
+| 像素格式 | `RGB_565` / `RGBA_8888` / PNG / WEBP |
 | 压缩 | raw 格式可选 LZ4；WEBP 可配置 `quality=` |
 
 ## 传输与格式
@@ -88,7 +88,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 通用参数：
 
 ```text
-width=NNN  height=NNN  format=rgb565|rgba|bgra|png|webp
+width=NNN  height=NNN  format=rgb565|rgba|png|webp
 compress=lz4  quality=1..100  fps=1..120
 ```
 
@@ -98,11 +98,10 @@ compress=lz4  quality=1..100  fps=1..120
 | --- | ---: | ---: | --- |
 | `rgb565` | 1 | 2 | 默认 raw 格式，带宽最低 |
 | `rgba` | 2 | 4 | Android 原生 4 通道顺序 |
-| `bgra` | 3 | 4 | OpenCV 友好，可直接 reshape 为 4 通道矩阵 |
 | `png` | 11 | - | 无损图片 |
 | `webp` | 12 | - | 有损或无损图片，取决于 `quality=` 和系统版本 |
 
-PNG 保持 id `11`，WEBP 保持 id `12`，以兼容已有客户端。
+格式 id `3` 已保留不用；PNG 保持 id `11`，WEBP 保持 id `12`，以兼容已有客户端。
 
 ## RC01 帧
 
