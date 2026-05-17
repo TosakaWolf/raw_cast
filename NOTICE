@@ -1,0 +1,27 @@
+raw_cast
+Copyright (C) 2026 raw_cast contributors
+
+Project license: AGPL-3.0-or-later
+
+This project is distributed under the GNU Affero General Public License,
+version 3 or any later version published by the Free Software Foundation.
+See LICENSE for the full license text.
+
+Third-party notices and retained upstream licenses:
+
+- Portions of the screen capture approach and related implementation are based
+  on DroidCast_raw and DroidCast. Those projects are licensed under
+  Apache-2.0, and their copyright and license notices are retained by this
+  notice and by source-level attribution where present.
+
+- DisplayControl-related implementation references and adapts ideas from
+  scrcpy. scrcpy is licensed under Apache-2.0, and source-level attribution is
+  retained where relevant.
+
+- app/src/main/cpp/lz4 is the upstream LZ4 submodule. The LZ4 library is
+  licensed under BSD-2-Clause. Other tools, programs, tests, examples, and
+  contributed files inside that submodule retain their upstream licenses as
+  documented by the license files in that directory.
+
+Third-party components are not relicensed by this NOTICE. They remain governed
+by their respective upstream license terms.

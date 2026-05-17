@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  raw_cast is launched ONLY via `app_process` in non-installed mode.
+  No Activity / Service / launcher icon is exported. The APK exists only as a
+  classpath/jni-lib container that is pushed to /data/local/tmp.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:label="raw_cast"
+        tools:targetApi="34"
+        tools:ignore="MissingApplicationIcon" />
+</manifest>

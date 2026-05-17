@@ -1,0 +1,6 @@
+raw_cast {
+  global:
+    Java_ink_mol_raw_1cast_*;
+  local:
+    *;
+};
