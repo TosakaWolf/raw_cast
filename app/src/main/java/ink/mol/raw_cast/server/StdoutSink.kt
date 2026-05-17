@@ -6,7 +6,6 @@ import ink.mol.raw_cast.Frame
 import ink.mol.raw_cast.FrameMux
 import ink.mol.raw_cast.FrameSource
 import ink.mol.raw_cast.PixelFmt
-import java.io.BufferedOutputStream
 import java.io.FileDescriptor
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
@@ -42,17 +41,18 @@ class StdoutSink(
         // gets in the way (e.g. a PrintStream that converts \n -> \r\n on Windows
         // shells).
         val fos = FileOutputStream(FileDescriptor.out)
-        val out = BufferedOutputStream(fos, 1 shl 20)
+        val channel = fos.channel
         try {
             val banner = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN)
             banner.putInt(Frame.MAGIC); banner.putInt(1)
-            out.write(banner.array())
-            out.flush()
+            banner.flip()
+            while (banner.hasRemaining()) {
+                channel.write(banner)
+            }
 
             if (oneShot || fps == 0) {
                 val f = source.capture(req)
-                FrameMux.writeTo(out, f)
-                out.flush()
+                FrameMux.writeTo(channel, f)
                 return
             }
 
@@ -60,8 +60,7 @@ class StdoutSink(
             while (true) {
                 val started = System.nanoTime()
                 val f = source.capture(req)
-                FrameMux.writeTo(out, f)
-                out.flush()
+                FrameMux.writeTo(channel, f)
                 val elapsedMs = (System.nanoTime() - started) / 1_000_000
                 val sleep = periodMs - elapsedMs
                 if (sleep > 0) try { Thread.sleep(sleep) } catch (_: InterruptedException) { return }
@@ -70,8 +69,7 @@ class StdoutSink(
             // Logcat-only because stdout might already be broken.
             Log.w(TAG, "stdout sink ended: ${e.message}")
         } finally {
-            try { out.flush() } catch (_: Throwable) {}
-            try { out.close() } catch (_: Throwable) {}
+            try { fos.close() } catch (_: Throwable) {}
         }
     }
 }
