@@ -50,6 +50,10 @@ The following reference run used MuMu emulator, Android 12, 1280x720, decoding `
 | Raw TCP + `rgb565` + LZ4 | 18 ms | 12 ms | 19 ms | 73.52 | Low and stable latency, the preferred combo for real-time Mat pipelines in this environment |
 | MuMu render baseline | 7 ms | 7 ms | 8 ms | 133.30 | Emulator-local render baseline; excludes raw_cast capture and ADB transfer cost |
 
+In the same scene, MuMuRender and `raw_cast/raw_tcp/rgb565/lz4` are visually indistinguishable:
+
+![MuMuRender and raw_cast/raw_tcp/rgb565/lz4 screenshot diff](../images/diff_en.jpg)
+
 Takeaway: `rgb565` + LZ4 greatly reduces transfer pressure in this emulator test. Raw TCP + LZ4 is the better default for long-running real-time streams; stdout + LZ4 remains useful for single-channel automation, one-shot capture, or port-unavailable fallback.
 
 ## Recommended Combos

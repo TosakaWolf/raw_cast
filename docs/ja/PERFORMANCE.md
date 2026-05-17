@@ -50,6 +50,10 @@ HTTP `/stream` は persistent connection と chunked response を使うため、
 | Raw TCP + `rgb565` + LZ4 | 18 ms | 12 ms | 19 ms | 73.52 | latency が低く安定しており、この環境ではリアルタイム Mat pipeline の優先候補です |
 | MuMu render baseline | 7 ms | 7 ms | 8 ms | 133.30 | エミュレーター内部の render baseline で、raw_cast capture と ADB 転送 cost は含みません |
 
+同じシーンでは、MuMuRender と `raw_cast/raw_tcp/rgb565/lz4` の可視ピクセル差はほぼありません。
+
+![MuMuRender and raw_cast/raw_tcp/rgb565/lz4 screenshot diff](../images/diff_en.jpg)
+
 まとめると、この emulator 環境では `rgb565` + LZ4 が転送負荷を大きく下げます。長時間のリアルタイム stream では Raw TCP + LZ4 を優先し、stdout + LZ4 は単一 channel の自動化、one-shot、ポートが使えない場合の fallback として使うのが向いています。
 
 ## Recommended Combos

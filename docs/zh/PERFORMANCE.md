@@ -50,6 +50,10 @@ HTTP `/stream` 使用长连接和 chunked response，避免每帧重新建连。
 | Raw TCP + `rgb565` + LZ4 | 18 ms | 12 ms | 19 ms | 73.52 | 延迟低且稳定，是该环境下实时 Mat 管线的优先组合 |
 | MuMu render baseline | 7 ms | 7 ms | 8 ms | 133.30 | 模拟器本地渲染基线，不包含 raw_cast 截图和 ADB 传输成本 |
 
+同场景截图对比中，MuMuRender 与 `raw_cast/raw_tcp/rgb565/lz4` 的可见像素基本无差异：
+
+![MuMuRender 与 raw_cast/raw_tcp/rgb565/lz4 截图差异对比](../images/diff_zh.png)
+
 结论：`rgb565` + LZ4 在该模拟器环境中显著降低传输压力；Raw TCP + LZ4 是长时间实时流的优先组合，stdout + LZ4 适合单通道自动化、单帧或端口不可用时的兜底。
 
 ## 推荐组合
