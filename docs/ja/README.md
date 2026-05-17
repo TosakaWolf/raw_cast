@@ -35,13 +35,6 @@ adb forward tcp:53517 tcp:53517
 # format=rgb565 fps=120 width=0 height=0 compress=none
 ```
 
-### ポート・圧縮・ベンチマーク
-
-- 要求した端末側ポートが使用中で `--port-retry` が後続ポートへ fallback した場合は、stdout の実ポートへ forward してください。たとえば `BIND:TCP=53519` の場合は `adb forward tcp:53517 tcp:53519` を使います。
-- 全フレームの `rgb565/rgba` payload が ADB link に負荷をかける場合は、同じ Raw TCP 接続を保持し、request 行を `format=rgb565 fps=120 width=0 height=0 compress=lz4` に変更します。
-- 固定ポートで手動デバッグするだけなら、先に `adb forward tcp:53517 tcp:53517` を実行し、`--port-retry=1` で起動すると端末側ポートの自動変更を避けられます。
-- Benchmark では `transport + pixel format + compression` の各組み合わせごとに stream を 1 回だけ初期化し、warmup 後に連続フレーム読み取りを計測してください。各組み合わせの計測後は reader、forward、remote process を停止します。
-
 ### stdout と HTTP debug stream
 
 ADB stdout binary stream。stdout モードはネットワークポートを開きません。stdout は純粋な RC01 binary stream で、`PID/BIND/READY` テキストは出力しません。
@@ -133,11 +126,8 @@ Raw TCP は接続後に空白区切りの `key=value` を 1 行送ります。HT
 | --- | --- |
 | リアルタイム Mat / OpenCV / 推論 | Raw TCP、`format=rgb565`、まず `compress=lz4` をテスト |
 | ポートが使えない場合や自動化 fallback | ADB stdout、`format=rgb565`、必要に応じて `compress=lz4` |
-| protocol / transport overhead の比較 | stdout / Raw TCP × `rgb565` / `rgba` × `none` / `lz4` を benchmark |
 | 4 channel raw pixels が必要 | `format=rgba`、必要に応じて `compress=lz4` |
 | ブラウザで手動確認 | HTTP `/preview`。debug 用で、高頻度 benchmark 用ではありません |
-
-Benchmark では `transport + pixel format + compression` の各組み合わせごとに stream を 1 回だけ初期化し、warmup 後に連続フレーム取得を測定してください。初回フレーム latency は別に記録します。各組み合わせの測定後は reader、forward、remote process を停止して、次の測定に影響しないようにします。
 
 ## Transport と Format
 

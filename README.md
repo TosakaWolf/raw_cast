@@ -47,13 +47,6 @@ adb forward tcp:53517 tcp:53517
 # format=rgb565 fps=120 width=0 height=0 compress=none
 ```
 
-### 端口、压缩与压测
-
-- 如果设备端端口被占用且 `--port-retry` 绑定到了后续端口，请按 stdout 中的实际端口 forward。例如 `BIND:TCP=53519` 时使用 `adb forward tcp:53517 tcp:53519`。
-- 如果 `rgb565/rgba` 未编码全帧像素负载对 ADB 链路压力较大，保持同一条 Raw TCP 连接，把请求行改为 `format=rgb565 fps=120 width=0 height=0 compress=lz4`。
-- 如果只是人工调试固定端口，可先执行 `adb forward tcp:53517 tcp:53517`，再用 `--port-retry=1` 启动，避免设备端自动换端口。
-- Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始化一次流，先预热再统计连续取帧；每个组合测完后停止 reader、forward 和远端进程。
-
 ### stdout 与 HTTP 调试通道
 
 ADB stdout 二进制流。stdout 模式不打开网络端口，stdout 是纯 RC01 二进制流，不输出 `PID/BIND/READY` 文本。
@@ -145,11 +138,8 @@ Raw TCP 在连接后发送一行空格分隔的 `key=value`；HTTP 调试通道�
 | --- | --- |
 | 实时 Mat / OpenCV / 推理 | Raw TCP，`format=rgb565`，优先测试 `compress=lz4` |
 | 无端口或自动化兜底 | ADB stdout，`format=rgb565`，可选 `compress=lz4` |
-| 对比协议和传输开销 | 分别测试 stdout / Raw TCP × `rgb565` / `rgba` × `none` / `lz4` |
 | 需要完整 4 通道 `rgba` 像素 | `format=rgba`，同样可选 `compress=lz4` |
 | 浏览器人工查看 | HTTP `/preview`，仅作为调试预览，不作为高频 benchmark 通道 |
-
-Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始化一次流，先预热再统计连续取帧；首帧耗时单独记录。每个组合测完后停止该类型的 reader、forward 和远端进程，避免影响下一个组合。
 
 ## 核心能力
 

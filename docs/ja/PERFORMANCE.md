@@ -30,6 +30,14 @@ raw_cast の遅延は主に capture、pixel conversion、encoding/compression、
 
 HTTP `/stream` は persistent connection と chunked response を使うため、フレームごとに再接続しません。Raw TCP より HTTP chunk 境界と header の分だけ余分です。debug や標準 client での調査に便利ですが、高頻度 benchmark のデフォルト channel ではありません。
 
+## ポート・圧縮・ベンチマーク
+
+- 要求した端末側ポートが使用中で `--port-retry` が後続ポートへ fallback した場合は、stdout の実ポートへ forward してください。たとえば `BIND:TCP=53519` の場合は `adb forward tcp:53517 tcp:53519` を使います。
+- 固定ポートで手動デバッグするだけなら、先に `adb forward tcp:53517 tcp:53517` を実行し、`--port-retry=1` で起動すると端末側ポートの自動変更を避けられます。
+- 全フレームの `rgb565/rgba` payload が ADB link に負荷をかける場合は、同じ Raw TCP 接続を保持し、request 行を `format=rgb565 fps=120 width=0 height=0 compress=lz4` に変更します。
+- Benchmark では `transport + pixel format + compression` の各組み合わせごとに stream を 1 回だけ初期化し、warmup 後に連続フレーム取得を測定します。初回フレーム latency は別に記録します。
+- 各組み合わせの測定後は reader、forward、remote process を停止して、次の測定に影響しないようにします。
+
 ## ベンチマーク参考
 
 以下は MuMu エミュレーター、Android 12、1280x720 で、`rgb565` を Mat に変換した 300 フレームの参考値です。未エンコードの `rgb565` payload は 1 フレーム約 1.76 MB、変換後の Mat は約 2.64 MB です。この値は同じ環境で transport と compression を比較するためのもので、すべての実機で同じ結果になるわけではありません。

@@ -35,13 +35,6 @@ adb forward tcp:53517 tcp:53517
 # format=rgb565 fps=120 width=0 height=0 compress=none
 ```
 
-### Ports, Compression, And Benchmarks
-
-- If the requested device port is busy and `--port-retry` falls back to a later port, forward to the actual port printed on stdout. For example, when stdout says `BIND:TCP=53519`, use `adb forward tcp:53517 tcp:53519`.
-- If full-frame `rgb565/rgba` payloads put pressure on the ADB link, keep the same Raw TCP connection and switch the request line to `format=rgb565 fps=120 width=0 height=0 compress=lz4`.
-- For manual debugging with a fixed port, you may run `adb forward tcp:53517 tcp:53517` first and start with `--port-retry=1` to avoid automatic device-side port changes.
-- For benchmarks, initialize each `transport + pixel format + compression` stream once, warm it up, then measure continuous frame reads. Stop the reader, forward, and remote process after each combination.
-
 ### stdout And HTTP Debug Streams
 
 ADB stdout binary stream. stdout mode opens no network port. stdout is the pure RC01 binary stream and does not print `PID/BIND/READY`.
@@ -133,11 +126,8 @@ Raw TCP sends one whitespace-separated `key=value` line after connecting; the HT
 | --- | --- |
 | Real-time Mat / OpenCV / inference | Raw TCP, `format=rgb565`, test `compress=lz4` first |
 | No-port or automation fallback | ADB stdout, `format=rgb565`, optional `compress=lz4` |
-| Compare protocol and transport overhead | Benchmark stdout / Raw TCP × `rgb565` / `rgba` × `none` / `lz4` |
 | Need full 4-channel raw pixels | `format=rgba`, with optional `compress=lz4` |
 | Manual browser inspection | HTTP `/preview`; use it for debugging, not high-frequency benchmarks |
-
-For benchmarks, initialize each `transport + pixel format + compression` stream once, warm it up, then measure continuous frame reads. Track first-frame latency separately. Stop that reader, forward, and remote process after each combo so it does not affect the next test.
 
 ## Transports and Formats
 

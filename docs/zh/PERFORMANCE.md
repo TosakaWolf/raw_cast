@@ -30,6 +30,14 @@ raw_cast 的耗时主要来自四部分：截图、像素转换、编码或压�
 
 HTTP `/stream` 使用长连接和 chunked response，避免每帧重新建连。它比 Raw TCP 多 HTTP chunk 边界和响应头开销，适合调试和标准客户端排查，不作为高频 benchmark 的默认通道。
 
+## 端口、压缩与压测
+
+- 如果设备端端口被占用且 `--port-retry` 绑定到了后续端口，请按 stdout 中的实际端口 forward。例如 `BIND:TCP=53519` 时使用 `adb forward tcp:53517 tcp:53519`。
+- 如果只是人工调试固定端口，可先执行 `adb forward tcp:53517 tcp:53517`，再用 `--port-retry=1` 启动，避免设备端自动换端口。
+- 如果 `rgb565/rgba` 未编码全帧像素负载对 ADB 链路压力较大，保持同一条 Raw TCP 连接，把请求行改为 `format=rgb565 fps=120 width=0 height=0 compress=lz4`。
+- Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始化一次流，先预热再统计连续取帧；首帧耗时单独记录。
+- 每个组合测完后停止该类型的 reader、forward 和远端进程，避免影响下一个组合。
+
 ## 实测参考
 
 以下数据来自 MuMu 模拟器，Android 12，1280x720，测试 `rgb565` 解码并转换为 Mat，连续采样 300 帧。单帧 `rgb565` 未编码 payload 约 1.76 MB，转换为 Mat 后约 2.64 MB。该结果适合比较同环境下的传输和压缩策略，不代表所有真机表现。
