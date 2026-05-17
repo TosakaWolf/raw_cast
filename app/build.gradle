@@ -3,6 +3,13 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+def rawCastVersionName = {
+    def value = System.getenv("RAW_CAST_VERSION")
+            ?: System.getenv("GITHUB_REF_NAME")
+            ?: "1.0"
+    return value.startsWith("v") ? value.substring(1) : value
+}()
+
 android {
     namespace 'ink.mol.raw_cast'
     compileSdk 34
@@ -12,7 +19,7 @@ android {
         minSdk 23
         targetSdk 34
         versionCode 1
-        versionName "1.0"
+        versionName rawCastVersionName
         resConfigs "en_US"
         resConfigs "hdpi"
         ndk {

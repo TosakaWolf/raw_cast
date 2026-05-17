@@ -41,13 +41,24 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Resolve release version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="1.0"
+          fi
+          echo "RAW_CAST_VERSION=${version}" >> "$GITHUB_ENV"
+          echo "Release version: ${version}"
+
       - name: Build release APK
         run: ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
-          name: raw-cast-universal-release-apk
+          name: raw-cast-${{ env.RAW_CAST_VERSION }}-universal-release-apk
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
@@ -62,7 +73,7 @@ jobs:
           else
             gh release create "$TAG_NAME" \
               app/build/outputs/apk/release/*.apk \
-              --title "$TAG_NAME" \
-              --notes "Release $TAG_NAME" \
+              --title "raw_cast $RAW_CAST_VERSION" \
+              --notes "Release $RAW_CAST_VERSION" \
               --verify-tag
           fi
