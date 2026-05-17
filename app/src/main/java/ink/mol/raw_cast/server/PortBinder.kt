@@ -2,7 +2,9 @@ package ink.mol.raw_cast.server
 
 import android.util.Log
 import java.net.BindException
+import java.net.InetSocketAddress
 import java.net.ServerSocket
+import java.nio.channels.ServerSocketChannel
 
 private const val TAG = "raw_cast"
 
@@ -66,6 +68,42 @@ object PortBinder {
                 lastError = e
                 Log.e(TAG, "[$transport] unexpected error binding port $tryPort: ${e.message}")
                 break // non-recoverable
+            }
+        }
+        Log.e(TAG, "[$transport] FAILED to bind any port in range $port..${port + maxRetries - 1}")
+        return BindResult(0, port, transport, success = false, error = lastError) to null
+    }
+
+    fun bindTcpChannel(
+        port: Int,
+        transport: String,
+        maxRetries: Int = 10,
+    ): Pair<BindResult, ServerSocketChannel?> {
+        var lastError: Exception? = null
+        for (attempt in 0 until maxRetries) {
+            val tryPort = port + attempt
+            if (tryPort > 65535) break
+            try {
+                val channel = ServerSocketChannel.open()
+                try {
+                    channel.configureBlocking(true)
+                    channel.socket().reuseAddress = true
+                    channel.socket().bind(InetSocketAddress(tryPort))
+                    if (attempt > 0) {
+                        Log.w(TAG, "[$transport] port $port busy, fell back to $tryPort")
+                    }
+                    return BindResult(tryPort, port, transport, success = true) to channel
+                } catch (e: Exception) {
+                    try { channel.close() } catch (_: Throwable) {}
+                    throw e
+                }
+            } catch (e: BindException) {
+                lastError = e
+                Log.w(TAG, "[$transport] port $tryPort in use: ${e.message}")
+            } catch (e: Exception) {
+                lastError = e
+                Log.e(TAG, "[$transport] unexpected error binding port $tryPort: ${e.message}")
+                break
             }
         }
         Log.e(TAG, "[$transport] FAILED to bind any port in range $port..${port + maxRetries - 1}")

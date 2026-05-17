@@ -109,18 +109,14 @@ class FrameSource {
             val bb = ByteBuffer.wrap(fallback)
             bitmap.copyPixelsToBuffer(bb)
             return EncodedFrame(
-                data = fallback, width = w, height = h, format = req.format,
+                payload = ByteArrayPayload(fallback), width = w, height = h, format = req.format,
                 lz4 = false, stride = 0, seq = seq.incrementAndGet(),
                 timestampMs = (SystemClock.elapsedRealtime() and 0xFFFFFFFFL).toInt()
             )
         }
 
-        val out = ByteArray(written)
-        buf.position(0); buf.limit(written)
-        buf.get(out)
-
         return EncodedFrame(
-            data = out, width = w, height = h, format = req.format,
+            payload = ByteBufferPayload(buf, 0, written), width = w, height = h, format = req.format,
             lz4 = req.lz4, stride = if (req.lz4) 0 else w * req.format.bytesPerPixel,
             seq = seq.incrementAndGet(),
             timestampMs = (SystemClock.elapsedRealtime() and 0xFFFFFFFFL).toInt(),
@@ -165,7 +161,7 @@ class FrameSource {
         }
         Log.i("raw_cast", "encoded ${mime} ${w}x${h} -> ${baos.size()}B")
         return EncodedFrame(
-            data = baos.toByteArray(), width = w, height = h, format = req.format,
+            payload = ByteArrayPayload(baos.toByteArray()), width = w, height = h, format = req.format,
             lz4 = false, stride = 0, seq = seq.incrementAndGet(),
             timestampMs = (SystemClock.elapsedRealtime() and 0xFFFFFFFFL).toInt(),
         )

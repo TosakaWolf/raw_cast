@@ -8,11 +8,11 @@ import ink.mol.raw_cast.FrameSource
 import ink.mol.raw_cast.PixelFmt
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.io.OutputStream
-import java.net.ServerSocket
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.channels.ServerSocketChannel
+import java.nio.channels.SocketChannel
 import java.nio.charset.StandardCharsets
 
 private const val TAG = "raw_cast"
@@ -43,7 +43,7 @@ class RawTcpServer(
     private val port: Int,
     private val maxRetries: Int = 10,
 ) {
-    @Volatile private var serverSocket: ServerSocket? = null
+    @Volatile private var serverChannel: ServerSocketChannel? = null
     @Volatile private var acceptThread: Thread? = null
 
     /** The port actually bound (may differ from [port] if fallback was used). 0 if not started. */
@@ -55,21 +55,21 @@ class RawTcpServer(
      * @return [PortBinder.BindResult] describing success/failure and the actual port.
      */
     fun start(): PortBinder.BindResult {
-        val (result, ss) = PortBinder.bindTcp(port, "Raw TCP", maxRetries)
-        if (!result.success || ss == null) {
+        val (result, server) = PortBinder.bindTcpChannel(port, "Raw TCP", maxRetries)
+        if (!result.success || server == null) {
             return result
         }
-        serverSocket = ss
+        serverChannel = server
         actualPort = result.actualPort
         Log.i(TAG, "Raw TCP listening on :$actualPort")
         acceptThread = Thread({
-            while (!Thread.currentThread().isInterrupted && !ss.isClosed) {
-                val sock = try {
-                    ss.accept()
+            while (!Thread.currentThread().isInterrupted && server.isOpen) {
+                val channel = try {
+                    server.accept()
                 } catch (e: Exception) {
                     Log.w(TAG, "tcp accept ended: ${e.message}"); return@Thread
                 }
-                Thread({ handleClient(sock) }, "raw_cast-tcp-${sock.port}").apply {
+                Thread({ handleClient(channel) }, "raw_cast-tcp-${channel.socket().port}").apply {
                     isDaemon = true
                 }.start()
             }
@@ -78,17 +78,18 @@ class RawTcpServer(
     }
 
     fun stop() {
-        try { serverSocket?.close() } catch (_: Throwable) {}
+        try { serverChannel?.close() } catch (_: Throwable) {}
         acceptThread?.interrupt()
     }
 
-    private fun handleClient(sock: Socket) {
+    private fun handleClient(channel: SocketChannel) {
+        val sock: Socket = channel.socket()
         try {
+            channel.configureBlocking(true)
             sock.tcpNoDelay = true
             sock.sendBufferSize = 1 shl 20 // 1 MiB
             sock.soTimeout = 0
             val reader = BufferedReader(InputStreamReader(sock.getInputStream(), StandardCharsets.US_ASCII))
-            val out: OutputStream = sock.getOutputStream()
 
             // Read one request line.
             val requestLine = reader.readLine() ?: ""
@@ -97,13 +98,14 @@ class RawTcpServer(
             // Banner
             val banner = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN)
             banner.putInt(Frame.MAGIC); banner.putInt(1)
-            out.write(banner.array())
-            out.flush()
+            banner.flip()
+            while (banner.hasRemaining()) {
+                channel.write(banner)
+            }
 
             if (fps == 0) {
                 val frame = source.capture(req)
-                FrameMux.writeTo(out, frame)
-                out.flush()
+                FrameMux.writeTo(channel, frame)
                 return
             }
 
@@ -111,8 +113,7 @@ class RawTcpServer(
             while (!sock.isClosed) {
                 val started = System.nanoTime()
                 val frame = source.capture(req)
-                FrameMux.writeTo(out, frame)
-                out.flush()
+                FrameMux.writeTo(channel, frame)
                 val elapsedMs = (System.nanoTime() - started) / 1_000_000
                 val sleep = periodMs - elapsedMs
                 if (sleep > 0) try { Thread.sleep(sleep) } catch (_: InterruptedException) { break }
