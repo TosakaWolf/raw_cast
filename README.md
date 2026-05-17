@@ -210,7 +210,7 @@ HTTP `/stream` 使用 chunked response；每个 chunk 是一帧完整的 RC01 he
 
 ## 性能基准
 
-MuMu 模拟器（Android 12，1280x720）下的 `rgb565` 转 Mat 测试显示：`rgb565` 像素负载相比 `rgba` 更小，转 Mat 后约 2.64 MB；开启 LZ4 后 stdout 和 Raw TCP 都能接近 58 fps；未压缩时 Raw TCP 明显优于 stdout，首帧和持续延迟更低。
+MuMu 模拟器（Android 12，1280x720）下的 `rgb565` 转 Mat 测试显示：`rgb565` 像素负载相比 `rgba` 更小，转 Mat 后约 2.64 MB；开启 LZ4 后 stdout 约 68.52 fps，Raw TCP 约 73.52 fps，未压缩时 Raw TCP 明显优于 stdout。
 
 更完整的测试环境、指标和建议见 [docs/zh/PERFORMANCE.md](docs/zh/PERFORMANCE.md)。
 

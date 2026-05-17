@@ -40,16 +40,17 @@ HTTP `/stream` uses a persistent connection and chunked response, so it does not
 
 ## Benchmark Reference
 
-The following reference run used MuMu emulator, Android 12, 1280x720, decoding `rgb565` frames into Mat for 300 samples. Each unencoded `rgb565` payload was about 1.76 MB, and the converted Mat was about 2.64 MB. Treat these numbers as transport and compression comparisons within that environment, not universal device results.
+The following reference run used MuMu emulator, Android 12, 1280x720, decoding `rgb565` frames into Mat for 200 samples with 0 failures. Each unencoded `rgb565` payload was about 1.76 MB, and the converted Mat was about 2.64 MB. Treat these numbers as transport and compression comparisons within that environment, not universal device results.
 
 | Combo | First frame | p50 | p95 | Effective fps | Observation |
 | --- | ---: | ---: | ---: | ---: | --- |
-| stdout + `rgb565` | 611 ms | 78 ms | 108 ms | 12.37 | Simplest startup path, but uncompressed large frames can be limited by stdout and ADB pipe throughput |
-| stdout + `rgb565` + LZ4 | 383 ms | 16 ms | 26 ms | 58.87 | Much higher throughput, useful for no-port automation and fallback paths |
-| Raw TCP + `rgb565` | 102 ms | 44 ms | 63 ms | 21.89 | More stable than stdout when uncompressed, with much lower first-frame latency |
-| Raw TCP + `rgb565` + LZ4 | 49 ms | 17 ms | 23 ms | 57.89 | Low and stable latency, the preferred combo for real-time Mat pipelines in this environment |
+| stdout + `rgb565` | 101 ms | 81 ms | 114 ms | 11.93 | Simplest startup path, but uncompressed large frames can be limited by stdout and ADB pipe throughput |
+| stdout + `rgb565` + LZ4 | 12 ms | 13 ms | 21 ms | 68.52 | Much higher throughput, useful for no-port automation and fallback paths |
+| Raw TCP + `rgb565` | 50 ms | 44 ms | 59 ms | 22.60 | More stable than stdout when uncompressed, with much lower first-frame latency |
+| Raw TCP + `rgb565` + LZ4 | 18 ms | 12 ms | 19 ms | 73.52 | Low and stable latency, the preferred combo for real-time Mat pipelines in this environment |
+| MuMu render baseline | 7 ms | 7 ms | 8 ms | 133.30 | Emulator-local render baseline; excludes raw_cast capture and ADB transfer cost |
 
-Takeaway: `rgb565` + LZ4 greatly reduces transfer pressure in this emulator test. Raw TCP is the better default for long-running real-time streams; stdout remains useful for single-channel automation, one-shot capture, or port-unavailable fallback.
+Takeaway: `rgb565` + LZ4 greatly reduces transfer pressure in this emulator test. Raw TCP + LZ4 is the better default for long-running real-time streams; stdout + LZ4 remains useful for single-channel automation, one-shot capture, or port-unavailable fallback.
 
 ## Recommended Combos
 
