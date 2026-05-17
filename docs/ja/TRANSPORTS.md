@@ -51,10 +51,10 @@ stdout モードはポート転送が不要で、自動化やローカルプロ�
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
 ```
 
-出力は 8 バイト banner + 連続 RC01 frames です。stderr はログ専用です。
+ホスト側は `adb shell` 子プロセスの stdout pipe を直接読み取ります。出力は 8 バイト banner + 連続 RC01 frames で、stderr はログ専用です。
 
 ## パラメータ
 

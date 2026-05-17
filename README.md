@@ -50,12 +50,12 @@ READY=1
 
 ### ADB stdout
 
-stdout 模式不打开网络端口，stdout 只输出 RC01 二进制流。不要把 stderr 合并到 stdout。
+stdout 模式不打开网络端口，stdout 只输出 RC01 二进制流。宿主程序应直接读取 `adb shell` 进程的 stdout pipe；不要把 stderr 合并到 stdout。
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
 ```
 
 抓取一帧：
@@ -63,7 +63,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --oneshot > frame.bin
+    --mode=stdout --format=rgb565 --oneshot 2>/dev/null
 ```
 
 ## 核心能力
@@ -132,6 +132,12 @@ HTTP `/stream` 使用 chunked response；每个 chunk 是一帧完整的 RC01 he
 ## 兼容性
 
 目标兼容 Android 6.0 到 Android 14（SDK 23 到 34）。Android 15 及以上需要按设备实测确认。
+
+## 性能基准
+
+MuMu 模拟器（Android 12，1280x720）下的 `rgb565` 转 Mat 测试显示：raw 帧约 2.64 MB，开启 LZ4 后 stdout 和 Raw TCP 都能接近 58 fps；未压缩时 Raw TCP 明显优于 stdout，首帧和持续延迟更低。
+
+更完整的测试环境、指标和建议见 [docs/zh/PERFORMANCE.md](docs/zh/PERFORMANCE.md)。
 
 ## 文档
 

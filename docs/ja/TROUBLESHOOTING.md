@@ -109,7 +109,7 @@ preview も異常な場合は、logcat の `ScreenCaptor` と `raw_cast` ログ�
 
 ## stdout stream を解析できない
 
-stdout は純粋な binary stream です。ファイルまたは client program にだけ渡してください。ログは stderr に出ます。Windows shell では改行を書き換えるツールを避けてください。
+stdout は純粋な binary stream です。ホスト側の client program が pipe から直接読み取ってください。ファイルへの保存は一時的なデバッグ用途に留めます。ログは stderr に出ます。Windows shell では改行を書き換えるツールを避けてください。
 
 ## 現在の機能を確認する
 

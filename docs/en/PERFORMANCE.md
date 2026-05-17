@@ -29,6 +29,19 @@ raw_cast latency mainly comes from capture, pixel conversion, encoding or compre
 
 HTTP `/stream` uses a persistent connection and chunked response, so it does not reconnect per frame. Compared with Raw TCP it adds HTTP chunk boundaries and headers, but it is much easier to integrate with standard clients.
 
+## Benchmark Reference
+
+The following reference run used MuMu emulator, Android 12, 1280x720, decoding `rgb565` frames into Mat for 300 samples. Each raw frame payload was about 2.64 MB. Treat these numbers as transport and compression comparisons within that environment, not universal device results.
+
+| Combo | First frame | p50 | p95 | Effective fps | Observation |
+| --- | ---: | ---: | ---: | ---: | --- |
+| stdout + `rgb565` | 611 ms | 78 ms | 108 ms | 12.37 | Simplest startup path, but uncompressed large frames can be limited by stdout and ADB pipe throughput |
+| stdout + `rgb565` + LZ4 | 383 ms | 16 ms | 26 ms | 58.87 | Much higher throughput, useful for no-port automation and fallback paths |
+| Raw TCP + `rgb565` | 102 ms | 44 ms | 63 ms | 21.89 | More stable than stdout when uncompressed, with much lower first-frame latency |
+| Raw TCP + `rgb565` + LZ4 | 49 ms | 17 ms | 23 ms | 57.89 | Low and stable latency, the preferred combo for real-time Mat pipelines in this environment |
+
+Takeaway: `rgb565` + LZ4 greatly reduces transfer pressure in this emulator test. Raw TCP is the better default for long-running real-time streams; stdout remains useful for single-channel automation, one-shot capture, or port-unavailable fallback.
+
 ## Recommended Combos
 
 | Scenario | Parameters |

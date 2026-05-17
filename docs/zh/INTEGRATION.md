@@ -65,7 +65,8 @@ stdout 模式适合调用方直接消费二进制流：
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
 ```
 
 该模式不输出 `PID` / `BIND` / `READY` 文本。
+宿主端应从子进程 stdout pipe 读取 banner 和 RC01 帧；`2>/dev/null` 只丢弃 stderr 日志。

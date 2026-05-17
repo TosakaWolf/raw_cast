@@ -30,8 +30,10 @@ stdout 模式：
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
 ```
+
+调用方应直接读取 `adb shell` 子进程的 stdout pipe。上面的 `2>/dev/null` 只丢弃 stderr 日志，不会影响二进制帧流；不要把 stdout 重定向到空设备。
 
 ## 端口参数
 

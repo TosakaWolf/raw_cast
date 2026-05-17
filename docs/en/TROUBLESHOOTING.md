@@ -109,7 +109,7 @@ Check in this order:
 
 ## stdout Stream Cannot Be Parsed
 
-stdout is a pure binary stream and should be written only to a file or client program. Logs are on stderr. On Windows shells, avoid tools that rewrite line endings.
+stdout is a pure binary stream and should be read directly from the host-side client process pipe. Write it to a file only for temporary debugging. Logs are on stderr. On Windows shells, avoid tools that rewrite line endings.
 
 ## Confirm Current Capabilities
 

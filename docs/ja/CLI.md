@@ -30,8 +30,10 @@ stdout モード：
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
 ```
+
+呼び出し側は `adb shell` 子プロセスの stdout pipe を直接読み取ります。上の `2>/dev/null` は stderr のログだけを捨て、binary frame stream には影響しません。stdout を null device にリダイレクトしないでください。
 
 ## ポート引数
 

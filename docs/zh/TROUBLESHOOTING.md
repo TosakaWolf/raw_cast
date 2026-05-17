@@ -109,7 +109,7 @@ http://127.0.0.1:53516/preview?format=webp&quality=80
 
 ## stdout 输出无法解析
 
-stdout 是纯二进制流，应只写给文件或客户端程序。日志在 stderr。Windows shell 中请避免会改写换行的管道工具。
+stdout 是纯二进制流，应由宿主端客户端程序直接从 pipe 读取。仅调试时才建议临时落盘；日志在 stderr。Windows shell 中请避免会改写换行的管道工具。
 
 ## 如何确认当前版本能力
 

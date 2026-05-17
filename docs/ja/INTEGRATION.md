@@ -65,7 +65,8 @@ stdout モードは呼び出し側が binary stream を直接消費する場合�
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
 ```
 
 このモードは `PID` / `BIND` / `READY` テキストを出力しません。
+ホスト側は子プロセスの stdout pipe から banner と RC01 frames を読み取ります。`2>/dev/null` は stderr logs だけを捨てます。

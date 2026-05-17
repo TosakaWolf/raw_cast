@@ -51,10 +51,10 @@ stdout 模式不需要端口转发，适合自动化和本机程序。
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
 ```
 
-输出格式为 8 字节 banner + 连续 RC01 帧。stderr 只用于日志。
+宿主端应直接读取 `adb shell` 子进程 stdout pipe。输出格式为 8 字节 banner + 连续 RC01 帧；stderr 只用于日志。
 
 ## 参数
 

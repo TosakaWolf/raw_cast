@@ -29,6 +29,19 @@ raw_cast の遅延は主に capture、pixel conversion、encoding/compression、
 
 HTTP `/stream` は persistent connection と chunked response を使うため、フレームごとに再接続しません。Raw TCP より HTTP chunk 境界と header の分だけ余分ですが、標準 client との連携が簡単です。
 
+## ベンチマーク参考
+
+以下は MuMu エミュレーター、Android 12、1280x720 で、`rgb565` を Mat に変換した 300 フレームの参考値です。raw payload は 1 フレーム約 2.64 MB です。この値は同じ環境で transport と compression を比較するためのもので、すべての実機で同じ結果になるわけではありません。
+
+| 組み合わせ | 初回フレーム | p50 | p95 | 実効 fps | 傾向 |
+| --- | ---: | ---: | ---: | ---: | --- |
+| stdout + `rgb565` | 611 ms | 78 ms | 108 ms | 12.37 | 起動は単純ですが、未圧縮の大きなフレームでは stdout/ADB pipe が詰まりやすいです |
+| stdout + `rgb565` + LZ4 | 383 ms | 16 ms | 26 ms | 58.87 | throughput が大きく改善し、ポートを使わない自動化や fallback に向きます |
+| Raw TCP + `rgb565` | 102 ms | 44 ms | 63 ms | 21.89 | 未圧縮では stdout より安定し、初回フレームも短くなります |
+| Raw TCP + `rgb565` + LZ4 | 49 ms | 17 ms | 23 ms | 57.89 | latency が低く安定しており、この環境ではリアルタイム Mat pipeline の優先候補です |
+
+まとめると、この emulator 環境では `rgb565` + LZ4 が転送負荷を大きく下げます。長時間のリアルタイム stream では Raw TCP を優先し、stdout は単一 channel の自動化、one-shot、ポートが使えない場合の fallback として使うのが向いています。
+
 ## Recommended Combos
 
 | 場面 | パラメータ |

@@ -51,10 +51,10 @@ stdout mode does not need port forwarding and is useful for automation and local
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
     app_process / ink.mol.raw_cast.Main \
-    --mode=stdout --format=rgb565 --fps=30 > stream.bin
+    --mode=stdout --format=rgb565 --fps=30 2>/dev/null
 ```
 
-The output is an 8-byte banner followed by continuous RC01 frames. stderr is used only for logs.
+The host should read the `adb shell` child process stdout pipe directly. The output is an 8-byte banner followed by continuous RC01 frames; stderr is used only for logs.
 
 ## Parameters
 
