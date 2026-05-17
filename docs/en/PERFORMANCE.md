@@ -10,14 +10,15 @@ raw_cast latency mainly comes from capture, pixel conversion, encoding or compre
 
 ## Format Choice
 
-| Format | Bandwidth | CPU cost | Best for |
+| Format | Per-frame payload | CPU cost | Best for |
 | --- | --- | --- | --- |
-| `rgb565` | Low | Low | Low-bandwidth raw data |
-| `png` | Low to medium | High | Lossless one-shot capture and comparisons |
-| `webp` | Low | Medium | Browser preview and low-bandwidth one-shot capture |
-| raw + LZ4 | Medium | Medium | Real-time raw streams over weaker links |
+| `rgb565` | Half of `rgba`, still full-frame unencoded pixels | Low | Real-time capture, CV, inference |
+| `rgba` | 2x `rgb565`, still full-frame unencoded pixels | Low | Full 4-channel pixels |
+| `png` | Depends on screen content, usually smaller than unencoded pixels | High | Lossless one-shot capture and comparisons |
+| `webp` | Depends on quality and screen content | Medium | Browser preview and compressed one-shot capture |
+| `rgb565` + LZ4 | Compressed size depends on screen changes | Medium | Real-time `rgb565/rgba` streams when the ADB link is under pressure |
 
-`compress=lz4` only applies to raw formats. PNG and WEBP are already compressed image formats.
+`compress=lz4` only applies to `rgb565/rgba`. PNG and WEBP are already compressed image formats.
 
 ## Transport Choice
 
@@ -31,7 +32,7 @@ HTTP `/stream` uses a persistent connection and chunked response, so it does not
 
 ## Benchmark Reference
 
-The following reference run used MuMu emulator, Android 12, 1280x720, decoding `rgb565` frames into Mat for 300 samples. Each raw frame payload was about 2.64 MB. Treat these numbers as transport and compression comparisons within that environment, not universal device results.
+The following reference run used MuMu emulator, Android 12, 1280x720, decoding `rgb565` frames into Mat for 300 samples. Each unencoded `rgb565` payload was about 1.76 MB, and the converted Mat was about 2.64 MB. Treat these numbers as transport and compression comparisons within that environment, not universal device results.
 
 | Combo | First frame | p50 | p95 | Effective fps | Observation |
 | --- | ---: | ---: | ---: | ---: | --- |
@@ -47,7 +48,7 @@ Takeaway: `rgb565` + LZ4 greatly reduces transfer pressure in this emulator test
 | Scenario | Parameters |
 | --- | --- |
 | Real-time CV or inference | Raw TCP, `format=rgb565`, convert color on the host side |
-| Weak-link raw stream | Raw TCP, `format=rgb565&compress=lz4` |
+| `rgb565/rgba` stream under ADB link pressure | Raw TCP, `format=rgb565&compress=lz4` |
 | Standard client streaming | HTTP, `/stream?format=rgb565&fps=30` |
 | Lossless screenshot | HTTP, `/screenshot?format=png` |
 | Browser preview | `/preview?format=webp&quality=80` |
@@ -57,7 +58,7 @@ Takeaway: `rgb565` + LZ4 greatly reduces transfer pressure in this emulator test
 
 1. Check whether the requested capture size is necessary; lowering resolution usually helps most.
 2. For CV workloads, prefer `rgb565` to reduce device-side work and transfer size, then convert to the required matrix format on the host.
-3. If bandwidth is limited, try `rgb565` or raw + LZ4.
+3. If full-frame `rgb565/rgba` payloads are too heavy, try `rgb565&compress=lz4`.
 4. Prefer HTTP for standard clients; prefer Raw TCP or stdout for maximum single-stream throughput.
 5. Prefer WEBP for manual previews.
 

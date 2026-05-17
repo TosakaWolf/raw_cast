@@ -10,14 +10,15 @@ raw_cast の遅延は主に capture、pixel conversion、encoding/compression、
 
 ## Format Choice
 
-| Format | 帯域 | CPU cost | 用途 |
+| Format | 1 フレーム payload | CPU cost | 用途 |
 | --- | --- | --- | --- |
-| `rgb565` | 低 | 低 | 低帯域の raw data |
-| `png` | 低から中 | 高 | 無劣化の単一フレーム、比較テスト |
-| `webp` | 低 | 中 | ブラウザプレビュー、低帯域の単一フレーム |
-| raw + LZ4 | 中 | 中 | 弱い link でのリアルタイム raw stream |
+| `rgb565` | `rgba` の半分ですが、全フレームの未エンコード pixels です | 低 | リアルタイム capture、CV、推論 |
+| `rgba` | `rgb565` の 2 倍で、全フレームの未エンコード pixels です | 低 | 完全な 4 channel pixels |
+| `png` | 画面内容に依存し、通常は未エンコード pixels より小さくなります | 高 | 無劣化の単一フレーム、比較テスト |
+| `webp` | quality と画面内容に依存します | 中 | ブラウザプレビュー、圧縮された単一フレーム |
+| `rgb565` + LZ4 | 圧縮後のサイズは画面変化に依存します | 中 | ADB link に負荷がある場合のリアルタイム `rgb565/rgba` stream |
 
-`compress=lz4` は raw format のみに適用されます。PNG と WEBP はすでに圧縮画像です。
+`compress=lz4` は `rgb565/rgba` のみに適用されます。PNG と WEBP はすでに圧縮画像です。
 
 ## Transport Choice
 
@@ -31,7 +32,7 @@ HTTP `/stream` は persistent connection と chunked response を使うため、
 
 ## ベンチマーク参考
 
-以下は MuMu エミュレーター、Android 12、1280x720 で、`rgb565` を Mat に変換した 300 フレームの参考値です。raw payload は 1 フレーム約 2.64 MB です。この値は同じ環境で transport と compression を比較するためのもので、すべての実機で同じ結果になるわけではありません。
+以下は MuMu エミュレーター、Android 12、1280x720 で、`rgb565` を Mat に変換した 300 フレームの参考値です。未エンコードの `rgb565` payload は 1 フレーム約 1.76 MB、変換後の Mat は約 2.64 MB です。この値は同じ環境で transport と compression を比較するためのもので、すべての実機で同じ結果になるわけではありません。
 
 | 組み合わせ | 初回フレーム | p50 | p95 | 実効 fps | 傾向 |
 | --- | ---: | ---: | ---: | ---: | --- |
@@ -47,7 +48,7 @@ HTTP `/stream` は persistent connection と chunked response を使うため、
 | 場面 | パラメータ |
 | --- | --- |
 | CV / 推論のリアルタイム処理 | Raw TCP、`format=rgb565`、ホスト側で色変換 |
-| 弱い link の raw stream | Raw TCP、`format=rgb565&compress=lz4` |
+| ADB link に負荷がある `rgb565/rgba` stream | Raw TCP、`format=rgb565&compress=lz4` |
 | 標準 client の stream | HTTP、`/stream?format=rgb565&fps=30` |
 | 無劣化スクリーンショット | HTTP、`/screenshot?format=png` |
 | ブラウザ preview | `/preview?format=webp&quality=80` |
@@ -57,7 +58,7 @@ HTTP `/stream` は persistent connection と chunked response を使うため、
 
 1. 必要な capture size か確認します。解像度を下げるのが最も効くことが多いです。
 2. CV では `rgb565` を優先して端末側の処理と転送量を抑え、必要な matrix format へはホスト側で変換します。
-3. 帯域が足りない場合は `rgb565` または raw + LZ4 を試します。
+3. 全フレームの `rgb565/rgba` payload が重い場合は `rgb565&compress=lz4` を試します。
 4. 標準 client では HTTP、単一 stream の最大 throughput では Raw TCP または stdout を優先します。
 5. 手動 preview では WEBP を優先します。
 

@@ -1,4 +1,4 @@
-﻿# Transports
+﻿# 传输方式
 
 <p>
   <a href="./TRANSPORTS.md">简体中文</a> ·
@@ -22,7 +22,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 
 | 路径 | 内容 |
 | --- | --- |
-| `/screenshot` | 单帧 raw、PNG 或 WEBP；尺寸、格式等信息在 `X-Frame-*` 响应头 |
+| `/screenshot` | 单帧 `rgb565/rgba`、PNG 或 WEBP；尺寸、格式等信息在 `X-Frame-*` 响应头 |
 | `/preview` | 单帧图片，默认 PNG，适合浏览器人工查看 |
 | `/stream` | `application/x-raw-cast-frames` chunked 流；每个 chunk 是一帧 RC01 数据 |
 
@@ -64,7 +64,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 | --- | --- | --- |
 | `format` | `rgb565` `rgba` `png` `webp` | 输出格式 |
 | `width` / `height` | 整数 | `0` 表示设备当前尺寸 |
-| `compress` | `lz4` 或 `none` | 只对 raw 格式生效 |
+| `compress` | `lz4` 或 `none` | 只对 `rgb565/rgba` 生效 |
 | `quality` | `1..100` | WEBP 质量 |
 | `fps` | `0..120` 或 `1..120` | 连续流帧率；Raw TCP 支持 `0` 单帧 |
 

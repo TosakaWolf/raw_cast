@@ -104,7 +104,7 @@ preview も異常な場合は、logcat の `ScreenCaptor` と `raw_cast` ログ�
 1. `width=` と `height=` で解像度を下げます。
 2. CV では Raw TCP + `format=rgb565` を使い、BGR/RGB matrix への変換はホスト側で行います。
 3. 単一 stream の最大性能では Raw TCP または stdout を使います。
-4. 帯域不足なら `format=rgb565&compress=lz4` を試します。
+4. 全フレームの `rgb565/rgba` payload が重い場合は `format=rgb565&compress=lz4` を試します。
 5. ホスト側の消費速度が十分か確認します。
 
 ## stdout stream を解析できない

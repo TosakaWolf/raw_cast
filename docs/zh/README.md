@@ -38,7 +38,7 @@ adb forward tcp:53517 tcp:53517
 ### 端口、压缩与压测
 
 - 如果设备端端口被占用且 `--port-retry` 绑定到了后续端口，请按 stdout 中的实际端口 forward。例如 `BIND:TCP=53519` 时使用 `adb forward tcp:53517 tcp:53519`。
-- 如果带宽或 ADB 链路吃紧，保持同一条 Raw TCP 连接，把请求行改为 `format=rgb565 fps=120 width=0 height=0 compress=lz4`。
+- 如果 `rgb565/rgba` 未编码全帧像素负载对 ADB 链路压力较大，保持同一条 Raw TCP 连接，把请求行改为 `format=rgb565 fps=120 width=0 height=0 compress=lz4`。
 - 如果只是人工调试固定端口，可先执行 `adb forward tcp:53517 tcp:53517`，再用 `--port-retry=1` 启动，避免设备端自动换端口。
 - Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始化一次流，先预热再统计连续取帧；每个组合测完后停止 reader、forward 和远端进程。
 
@@ -82,7 +82,7 @@ adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol
 | `--mode=stdout` / `--stdout` | 是 | 关闭 | - | stdout 二进制流模式，不打开网络端口 |
 | `--format=NAME` | stdout 常用 | `rgb565` | `rgb565`、`rgba`、`png`、`webp` | stdout 输出格式；网络模式通常改用请求参数 |
 | `--fps=N` | stdout 常用 | `30` | `0..120` | stdout 帧率；stdout 中 `0` 表示单帧 |
-| `--compress=lz4` / `--lz4` | 常用 | `none` | `none`、`lz4` | raw 格式可选 LZ4；PNG/WEBP 不叠加 LZ4 |
+| `--compress=lz4` / `--lz4` | 常用 | `none` | `none`、`lz4` | `rgb565/rgba` 可选 LZ4；PNG/WEBP 不叠加 LZ4 |
 | `--oneshot` | stdout 常用 | 关闭 | - | stdout 输出一帧后退出 |
 | `--width=N` | 按需 | `0` | `0..` | 输出宽度；`0` 使用当前设备尺寸 |
 | `--height=N` | 按需 | `0` | `0..` | 输出高度；`0` 使用当前设备尺寸 |
@@ -96,7 +96,7 @@ Raw TCP 在连接后发送一行空格分隔的 `key=value`；HTTP 使用 query 
 | --- | --- | --- | --- | --- | --- |
 | `format` | 是 | `rgb565` | `rgb565`、`rgba`、`png`、`webp` | Raw TCP / HTTP | 输出像素或图片格式 |
 | `fps` | 是 | `30` | Raw TCP: `0..120`；HTTP stream: `1..120` | Raw TCP / HTTP stream | 连续取流帧率；Raw TCP 中 `0` 表示单帧 |
-| `compress` | 是 | `none` | `none`、`lz4` | raw 格式 | LZ4 压缩开关 |
+| `compress` | 是 | `none` | `none`、`lz4` | `rgb565/rgba` | LZ4 压缩开关 |
 | `width` | 按需 | `0` | `0..` | Raw TCP / HTTP | 输出宽度；`0` 使用当前设备尺寸 |
 | `height` | 按需 | `0` | `0..` | Raw TCP / HTTP | 输出高度；`0` 使用当前设备尺寸 |
 | `quality` | 图片格式按需 | `100` | `1..100` | `webp` | WEBP 质量 |
@@ -108,7 +108,7 @@ Raw TCP 在连接后发送一行空格分隔的 `key=value`；HTTP 使用 query 
 | 实时 Mat / OpenCV / 推理 | Raw TCP，`format=rgb565`，优先测试 `compress=lz4` |
 | 无端口或自动化兜底 | ADB stdout，`format=rgb565`，可选 `compress=lz4` |
 | 对比协议和传输开销 | 分别测试 stdout / Raw TCP × `rgb565` / `rgba` × `none` / `lz4` |
-| 需要完整 4 通道原始像素 | `format=rgba`，同样可选 `compress=lz4` |
+| 需要完整 4 通道 `rgba` 像素 | `format=rgba`，同样可选 `compress=lz4` |
 | 浏览器人工查看 | HTTP `/preview`，仅作为调试预览，不作为高频 benchmark 通道 |
 
 Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始化一次流，先预热再统计连续取帧；首帧耗时单独记录。每个组合测完后停止该类型的 reader、forward 和远端进程，避免影响下一个组合。
@@ -123,12 +123,12 @@ Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始�
 
 | `format=` | 协议 id | 字节/像素 | 用途 |
 | --- | ---: | ---: | --- |
-| `rgb565` | 1 | 2 | 默认推荐 raw 格式，传输压力低 |
+| `rgb565` | 1 | 2 | 默认推荐；相比 `rgba` 像素负载减半，但仍是未编码全帧数据 |
 | `rgba` | 2 | 4 | Android 原生 4 通道顺序 |
 | `png` | 11 | - | 无损图片 |
 | `webp` | 12 | - | 有损或无损图片，取决于 `quality=` 和系统版本 |
 
-`compress=lz4` 只对 `rgb565` / `rgba` 这类 raw 格式生效。PNG/WEBP 不叠加 LZ4。
+`compress=lz4` 只对 `rgb565/rgba` 生效。PNG/WEBP 不叠加 LZ4。
 
 ## 文档入口
 

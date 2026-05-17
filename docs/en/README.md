@@ -38,7 +38,7 @@ adb forward tcp:53517 tcp:53517
 ### Ports, Compression, And Benchmarks
 
 - If the requested device port is busy and `--port-retry` falls back to a later port, forward to the actual port printed on stdout. For example, when stdout says `BIND:TCP=53519`, use `adb forward tcp:53517 tcp:53519`.
-- If bandwidth or the ADB link is tight, keep the same Raw TCP connection and switch the request line to `format=rgb565 fps=120 width=0 height=0 compress=lz4`.
+- If full-frame `rgb565/rgba` payloads put pressure on the ADB link, keep the same Raw TCP connection and switch the request line to `format=rgb565 fps=120 width=0 height=0 compress=lz4`.
 - For manual debugging with a fixed port, you may run `adb forward tcp:53517 tcp:53517` first and start with `--port-retry=1` to avoid automatic device-side port changes.
 - For benchmarks, initialize each `transport + pixel format + compression` stream once, warm it up, then measure continuous frame reads. Stop the reader, forward, and remote process after each combination.
 
@@ -82,7 +82,7 @@ Launch options are passed to `app_process`. In network mode, usually configure o
 | `--mode=stdout` / `--stdout` | Yes | Off | - | stdout binary stream mode; opens no network port |
 | `--format=NAME` | Common for stdout | `rgb565` | `rgb565`, `rgba`, `png`, `webp` | stdout output format; network mode usually uses request parameters |
 | `--fps=N` | Common for stdout | `30` | `0..120` | stdout frame rate; `0` means one frame in stdout mode |
-| `--compress=lz4` / `--lz4` | Yes | `none` | `none`, `lz4` | Optional LZ4 for raw formats; PNG/WEBP are not wrapped in LZ4 |
+| `--compress=lz4` / `--lz4` | Yes | `none` | `none`, `lz4` | Optional LZ4 for `rgb565/rgba`; PNG/WEBP are not wrapped in LZ4 |
 | `--oneshot` | Common for stdout | Off | - | Emit one stdout frame and exit |
 | `--width=N` | As needed | `0` | `0..` | Output width; `0` uses the current device size |
 | `--height=N` | As needed | `0` | `0..` | Output height; `0` uses the current device size |
@@ -96,7 +96,7 @@ Raw TCP sends one whitespace-separated `key=value` line after connecting; HTTP u
 | --- | --- | --- | --- | --- | --- |
 | `format` | Yes | `rgb565` | `rgb565`, `rgba`, `png`, `webp` | Raw TCP / HTTP | Output pixel or image format |
 | `fps` | Yes | `30` | Raw TCP: `0..120`; HTTP stream: `1..120` | Raw TCP / HTTP stream | Streaming frame rate; Raw TCP `0` means one frame |
-| `compress` | Yes | `none` | `none`, `lz4` | raw formats | LZ4 compression switch |
+| `compress` | Yes | `none` | `none`, `lz4` | `rgb565/rgba` | LZ4 compression switch |
 | `width` | As needed | `0` | `0..` | Raw TCP / HTTP | Output width; `0` uses the current device size |
 | `height` | As needed | `0` | `0..` | Raw TCP / HTTP | Output height; `0` uses the current device size |
 | `quality` | Image formats | `100` | `1..100` | `webp` | WEBP quality |
@@ -123,12 +123,12 @@ For benchmarks, initialize each `transport + pixel format + compression` stream 
 
 | `format=` | Protocol id | Bytes/pixel | Use |
 | --- | ---: | ---: | --- |
-| `rgb565` | 1 | 2 | Recommended default raw format with low transfer pressure |
+| `rgb565` | 1 | 2 | Recommended default; half the pixel payload of `rgba`, but still full-frame unencoded data |
 | `rgba` | 2 | 4 | Android native 4-channel order |
 | `png` | 11 | - | Lossless image |
 | `webp` | 12 | - | Lossy or lossless image depending on `quality=` and system version |
 
-`compress=lz4` only applies to raw formats such as `rgb565` and `rgba`. PNG/WEBP are not wrapped in LZ4.
+`compress=lz4` only applies to `rgb565/rgba`. PNG/WEBP are not wrapped in LZ4.
 
 ## Documents
 

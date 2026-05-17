@@ -53,7 +53,7 @@ Network mode must enable HTTP or Raw TCP. stdout mode ignores network ports.
 | `--format=NAME` | `rgb565` | `rgb565`, `rgba`, `png`, `webp` |
 | `--width=N` | `0` | Output width; `0` uses the current device size |
 | `--height=N` | `0` | Output height; `0` uses the current device size |
-| `--compress=lz4` | `none` | Only applies to raw formats |
+| `--compress=lz4` | `none` | Only applies to `rgb565/rgba` |
 | `--quality=N` | `100` | WEBP quality, 1..100 |
 | `--fps=N` | `30` | Streaming frame rate; in stdout mode `0` means one frame |
 | `--oneshot` | - | In stdout mode, emit one frame and exit |

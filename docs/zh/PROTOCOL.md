@@ -1,4 +1,4 @@
-﻿# Protocol
+﻿# RC01 协议
 
 <p>
   <a href="./PROTOCOL.md">简体中文</a> ·
@@ -44,7 +44,7 @@ offset  size  field
 
 | bit | 名称 | 说明 |
 | ---: | --- | --- |
-| 0 | `LZ4` | payload 使用 LZ4 压缩；只对 raw 格式有效 |
+| 0 | `LZ4` | payload 使用 LZ4 压缩；只对 `rgb565/rgba` 有效 |
 
 `stride` 是 raw payload 的每行字节数。压缩图片格式使用 `0`。
 

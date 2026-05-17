@@ -44,7 +44,7 @@ offset  size  field
 
 | bit | Name | Description |
 | ---: | --- | --- |
-| 0 | `LZ4` | Payload is LZ4-compressed; valid only for raw formats |
+| 0 | `LZ4` | Payload is LZ4-compressed; valid only for `rgb565/rgba` |
 
 `stride` is the row stride in bytes for raw payloads. Image formats use `0`.
 

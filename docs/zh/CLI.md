@@ -1,4 +1,4 @@
-﻿# CLI
+﻿# 命令行参数
 
 <p>
   <a href="./CLI.md">简体中文</a> ·
@@ -53,7 +53,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 | `--format=NAME` | `rgb565` | `rgb565`、`rgba`、`png`、`webp` |
 | `--width=N` | `0` | 输出宽度，`0` 表示使用设备当前尺寸 |
 | `--height=N` | `0` | 输出高度，`0` 表示使用设备当前尺寸 |
-| `--compress=lz4` | `none` | 只对 raw 格式生效 |
+| `--compress=lz4` | `none` | 只对 `rgb565/rgba` 生效 |
 | `--quality=N` | `100` | WEBP 质量，范围 1..100 |
 | `--fps=N` | `30` | 连续输出帧率；stdout 中 `0` 表示单帧 |
 | `--oneshot` | - | stdout 下输出一帧后退出 |

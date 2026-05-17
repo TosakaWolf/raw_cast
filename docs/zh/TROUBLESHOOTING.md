@@ -1,4 +1,4 @@
-﻿# Troubleshooting
+﻿# 故障排查
 
 <p>
   <a href="./TROUBLESHOOTING.md">简体中文</a> ·
@@ -104,7 +104,7 @@ http://127.0.0.1:53516/preview?format=webp&quality=80
 1. 降低分辨率：加 `width=` 和 `height=`。
 2. CV 场景使用 Raw TCP + `format=rgb565`，宿主端按需要转换为 BGR/RGB 矩阵。
 3. 单路极限性能使用 Raw TCP 或 stdout。
-4. 带宽不足时尝试 `format=rgb565&compress=lz4`。
+4. `rgb565/rgba` 未编码全帧像素负载过大时尝试 `format=rgb565&compress=lz4`。
 5. 确认主机端消费速度足够快。
 
 ## stdout 输出无法解析

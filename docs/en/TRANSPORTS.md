@@ -64,7 +64,7 @@ All formal transports share these parameters:
 | --- | --- | --- |
 | `format` | `rgb565` `rgba` `png` `webp` | Output format |
 | `width` / `height` | integer | `0` means current device size |
-| `compress` | `lz4` or `none` | Only applies to raw formats |
+| `compress` | `lz4` or `none` | Only applies to `rgb565/rgba` |
 | `quality` | `1..100` | WEBP quality |
 | `fps` | `0..120` or `1..120` | Stream frame rate; Raw TCP supports `0` for one-shot |
 

@@ -64,7 +64,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 | --- | --- | --- |
 | `format` | `rgb565` `rgba` `png` `webp` | 出力形式 |
 | `width` / `height` | 整数 | `0` は現在の端末サイズ |
-| `compress` | `lz4` または `none` | raw format のみ有効 |
+| `compress` | `lz4` または `none` | `rgb565/rgba` のみ有効 |
 | `quality` | `1..100` | WEBP 品質 |
 | `fps` | `0..120` または `1..120` | 連続 stream のフレームレート。Raw TCP は `0` の one-shot に対応 |
 

@@ -53,7 +53,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 | `--format=NAME` | `rgb565` | `rgb565`、`rgba`、`png`、`webp` |
 | `--width=N` | `0` | 出力幅。`0` は現在の端末サイズ |
 | `--height=N` | `0` | 出力高さ。`0` は現在の端末サイズ |
-| `--compress=lz4` | `none` | raw format のみ有効 |
+| `--compress=lz4` | `none` | `rgb565/rgba` のみ有効 |
 | `--quality=N` | `100` | WEBP 品質、1..100 |
 | `--fps=N` | `30` | 連続出力のフレームレート。stdout では `0` が 1 フレーム |
 | `--oneshot` | - | stdout で 1 フレーム出力して終了 |

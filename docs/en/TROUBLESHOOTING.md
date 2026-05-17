@@ -104,7 +104,7 @@ Check in this order:
 1. Reduce resolution with `width=` and `height=`.
 2. For CV workloads, use Raw TCP + `format=rgb565` and convert to BGR/RGB matrices on the host.
 3. For maximum single-stream throughput, use Raw TCP or stdout.
-4. If bandwidth is limited, try `format=rgb565&compress=lz4`.
+4. If full-frame `rgb565/rgba` payloads are too heavy, try `format=rgb565&compress=lz4`.
 5. Confirm the host-side consumer is fast enough.
 
 ## stdout Stream Cannot Be Parsed

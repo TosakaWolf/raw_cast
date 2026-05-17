@@ -38,7 +38,7 @@ adb forward tcp:53517 tcp:53517
 ### ポート・圧縮・ベンチマーク
 
 - 要求した端末側ポートが使用中で `--port-retry` が後続ポートへ fallback した場合は、stdout の実ポートへ forward してください。たとえば `BIND:TCP=53519` の場合は `adb forward tcp:53517 tcp:53519` を使います。
-- 帯域や ADB link が厳しい場合は、同じ Raw TCP 接続を保持し、request 行を `format=rgb565 fps=120 width=0 height=0 compress=lz4` に変更します。
+- 全フレームの `rgb565/rgba` payload が ADB link に負荷をかける場合は、同じ Raw TCP 接続を保持し、request 行を `format=rgb565 fps=120 width=0 height=0 compress=lz4` に変更します。
 - 固定ポートで手動デバッグするだけなら、先に `adb forward tcp:53517 tcp:53517` を実行し、`--port-retry=1` で起動すると端末側ポートの自動変更を避けられます。
 - Benchmark では `transport + pixel format + compression` の各組み合わせごとに stream を 1 回だけ初期化し、warmup 後に連続フレーム読み取りを計測してください。各組み合わせの計測後は reader、forward、remote process を停止します。
 
@@ -82,7 +82,7 @@ adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk app_process / ink.mol
 | `--mode=stdout` / `--stdout` | はい | 無効 | - | stdout binary stream mode。ネットワークポートを開きません |
 | `--format=NAME` | stdout で使用 | `rgb565` | `rgb565`、`rgba`、`png`、`webp` | stdout 出力 format。ネットワークモードでは通常 request parameter を使います |
 | `--fps=N` | stdout で使用 | `30` | `0..120` | stdout frame rate。stdout では `0` が 1 フレーム |
-| `--compress=lz4` / `--lz4` | はい | `none` | `none`、`lz4` | raw format 用の LZ4。PNG/WEBP は LZ4 で包みません |
+| `--compress=lz4` / `--lz4` | はい | `none` | `none`、`lz4` | `rgb565/rgba` 用の LZ4。PNG/WEBP は LZ4 で包みません |
 | `--oneshot` | stdout で使用 | 無効 | - | stdout で 1 フレーム出力して終了 |
 | `--width=N` | 必要に応じて | `0` | `0..` | 出力幅。`0` は現在の端末サイズ |
 | `--height=N` | 必要に応じて | `0` | `0..` | 出力高さ。`0` は現在の端末サイズ |
@@ -96,7 +96,7 @@ Raw TCP は接続後に空白区切りの `key=value` を 1 行送ります。HT
 | --- | --- | --- | --- | --- | --- |
 | `format` | はい | `rgb565` | `rgb565`、`rgba`、`png`、`webp` | Raw TCP / HTTP | 出力 pixel または image format |
 | `fps` | はい | `30` | Raw TCP: `0..120`、HTTP stream: `1..120` | Raw TCP / HTTP stream | stream frame rate。Raw TCP の `0` は 1 フレーム |
-| `compress` | はい | `none` | `none`、`lz4` | raw format | LZ4 compression switch |
+| `compress` | はい | `none` | `none`、`lz4` | `rgb565/rgba` | LZ4 compression switch |
 | `width` | 必要に応じて | `0` | `0..` | Raw TCP / HTTP | 出力幅。`0` は現在の端末サイズ |
 | `height` | 必要に応じて | `0` | `0..` | Raw TCP / HTTP | 出力高さ。`0` は現在の端末サイズ |
 | `quality` | 画像 format 用 | `100` | `1..100` | `webp` | WEBP 品質 |
@@ -123,12 +123,12 @@ Benchmark では `transport + pixel format + compression` の各組み合わせ�
 
 | `format=` | Protocol id | bytes/pixel | 用途 |
 | --- | ---: | ---: | --- |
-| `rgb565` | 1 | 2 | 推奨既定 raw format。転送負荷が低い |
+| `rgb565` | 1 | 2 | 推奨既定。`rgba` の半分の pixel payload ですが、全フレームの未エンコードデータです |
 | `rgba` | 2 | 4 | Android native 4 channel order |
 | `png` | 11 | - | lossless image |
 | `webp` | 12 | - | `quality=` と system version に依存する lossy/lossless image |
 
-`compress=lz4` は `rgb565` / `rgba` のような raw format のみに適用されます。PNG/WEBP は LZ4 で包みません。
+`compress=lz4` は `rgb565/rgba` のみに適用されます。PNG/WEBP は LZ4 で包みません。
 
 ## ドキュメント
 

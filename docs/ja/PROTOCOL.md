@@ -44,7 +44,7 @@ offset  size  field
 
 | bit | 名前 | 説明 |
 | ---: | --- | --- |
-| 0 | `LZ4` | payload が LZ4 圧縮。raw format のみ有効 |
+| 0 | `LZ4` | payload が LZ4 圧縮。`rgb565/rgba` のみ有効 |
 
 `stride` は raw payload の 1 行あたりのバイト数です。画像 format では `0` です。
 
