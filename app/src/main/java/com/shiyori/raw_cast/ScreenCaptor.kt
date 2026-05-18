@@ -214,7 +214,7 @@ object ScreenCaptor {
         if (setPixelFormatUnsupported) return null
         setPixelFormatMethod?.let { return it }
         return try {
-            findMethod(builderClass, "setPixelFormat", Int::class.javaPrimitiveType!!).also {
+            findSetPixelFormatMethod(builderClass).also {
                 it.isAccessible = true
                 setPixelFormatMethod = it
             }
@@ -233,6 +233,23 @@ object ScreenCaptor {
             setPixelFormatUnsupported = true
             warnSetPixelFormatFallback("DisplayCaptureArgs.Builder.setPixelFormat(int) failed")
             false
+        }
+    }
+
+    private fun findSetPixelFormatMethod(builderClass: Class<*>): Method {
+        val intType = Int::class.javaPrimitiveType!!
+        try {
+            return builderClass.getDeclaredMethod("setPixelFormat", intType)
+        } catch (e: NoSuchMethodException) {
+            var cls = builderClass.superclass
+            while (cls != null) {
+                try {
+                    return cls.getDeclaredMethod("setPixelFormat", intType)
+                } catch (ignored: NoSuchMethodException) {
+                    cls = cls.superclass
+                }
+            }
+            return builderClass.getMethod("setPixelFormat", intType)
         }
     }
 
