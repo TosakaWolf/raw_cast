@@ -1,4 +1,4 @@
-package ink.mol.raw_cast
+package com.shiyori.raw_cast
 
 import android.graphics.Bitmap
 import android.graphics.PixelFormat

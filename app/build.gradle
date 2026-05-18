@@ -11,11 +11,11 @@ def rawCastVersionName = {
 }()
 
 android {
-    namespace 'ink.mol.raw_cast'
+    namespace 'com.shiyori.raw_cast'
     compileSdk 34
 
     defaultConfig {
-        applicationId "ink.mol.raw_cast"
+        applicationId "com.shiyori.raw_cast"
         minSdk 23
         targetSdk 34
         versionCode 1

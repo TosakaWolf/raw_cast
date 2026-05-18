@@ -20,7 +20,7 @@ adb push raw_cast.apk /data/local/tmp/raw_cast.apk
 
 # 2. 启动 Raw TCP。stdout 会输出 PID/BIND/READY 状态行，stderr 只用于日志。
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --port=0 --tcp=53517 --port-retry=10
 
 # 3. 等待 stdout 状态行；BIND:TCP 是设备端实际绑定端口。
@@ -50,7 +50,7 @@ ADB stdout 二进制流。stdout 模式不打开网络端口，stdout 是纯 RC0
 
 ```shell
 adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --fps=120 \
@@ -62,7 +62,7 @@ adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
 
 ```shell
 adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --fps=120 \
@@ -70,7 +70,7 @@ adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
     2>/dev/null'
 
 adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --oneshot \
@@ -82,7 +82,7 @@ HTTP 仅作为浏览器预览和调试取流通道：
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --port=53516 --tcp=53517 --port-retry=10
 
 # 读到 READY=1 后，按 BIND 输出的实际端口 forward。

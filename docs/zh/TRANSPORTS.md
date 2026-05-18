@@ -1,4 +1,4 @@
-﻿# 传输方式
+# 传输方式
 
 <p>
   <a href="./TRANSPORTS.md">简体中文</a> ·
@@ -15,7 +15,7 @@ Raw TCP 适合本地程序、OpenCV 或需要最低协议开销的客户端。
 ```shell
 adb forward tcp:53517 tcp:53517
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --tcp=53517
+    app_process / com.shiyori.raw_cast.Main --tcp=53517
 ```
 
 客户端连接后发送一行 ASCII 请求：
@@ -32,7 +32,7 @@ stdout 模式不需要端口转发，适合自动化和本机程序。
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --fps=30 \
@@ -48,7 +48,7 @@ HTTP 仅用于调试，端口默认 53516：
 ```shell
 adb forward tcp:53516 tcp:53516
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --port=53516
+    app_process / com.shiyori.raw_cast.Main --port=53516
 ```
 
 端点：

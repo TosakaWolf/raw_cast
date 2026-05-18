@@ -1,4 +1,4 @@
-﻿# Integration
+# Integration
 
 <p>
   <a href="../zh/INTEGRATION.md">简体中文</a> ·
@@ -14,7 +14,7 @@
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --port=53516 --tcp=53517
 ```
 
@@ -45,7 +45,7 @@ stdout モードは呼び出し側が binary stream を直接消費する場合�
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --fps=30 \

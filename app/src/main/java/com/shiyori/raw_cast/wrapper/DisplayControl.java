@@ -1,4 +1,4 @@
-package ink.mol.raw_cast.wrapper;
+package com.shiyori.raw_cast.wrapper;
 
 import android.annotation.SuppressLint;
 import android.os.IBinder;

@@ -1,4 +1,4 @@
-﻿# Troubleshooting
+# Troubleshooting
 
 <p>
   <a href="../zh/TROUBLESHOOTING.md">简体中文</a> ·
@@ -12,7 +12,7 @@
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --port=53516 --tcp=53517
+    app_process / com.shiyori.raw_cast.Main --port=53516 --tcp=53517
 ```
 
 よくある原因：
@@ -30,7 +30,7 @@ adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --port=53516 --tcp=53517
 ```
 

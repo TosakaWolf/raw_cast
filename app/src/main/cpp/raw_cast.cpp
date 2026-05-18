@@ -150,7 +150,7 @@ static int convert_from_rgb565(const uint8_t* src, size_t src_stride_bytes,
 // ---------------------------------------------------------------------------
 
 extern "C" JNIEXPORT jint JNICALL
-Java_ink_mol_raw_1cast_NativeBridge_copyHardwareBuffer(
+Java_com_shiyori_raw_1cast_NativeBridge_copyHardwareBuffer(
         JNIEnv* env, jclass /*clazz*/,
         jobject hardware_buffer, jobject byte_buffer,
         jint position, jint limit, jint target_format, jboolean lz4_compress) {
@@ -245,7 +245,7 @@ Java_ink_mol_raw_1cast_NativeBridge_copyHardwareBuffer(
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_ink_mol_raw_1cast_NativeBridge_copyBitmap(
+Java_com_shiyori_raw_1cast_NativeBridge_copyBitmap(
         JNIEnv* env, jclass /*clazz*/,
         jobject bitmap, jobject byte_buffer,
         jint position, jint limit, jint target_format, jboolean lz4_compress) {
@@ -321,13 +321,13 @@ Java_ink_mol_raw_1cast_NativeBridge_copyBitmap(
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_ink_mol_raw_1cast_NativeBridge_lz4CompressBound(
+Java_com_shiyori_raw_1cast_NativeBridge_lz4CompressBound(
         JNIEnv* /*env*/, jclass /*clazz*/, jint data_size) {
     return LZ4_compressBound(data_size);
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_ink_mol_raw_1cast_NativeBridge_lz4Compress(
+Java_com_shiyori_raw_1cast_NativeBridge_lz4Compress(
         JNIEnv* env, jclass /*clazz*/,
         jobject src, jint src_pos, jint src_len,
         jobject dst, jint dst_pos, jint dst_cap) {

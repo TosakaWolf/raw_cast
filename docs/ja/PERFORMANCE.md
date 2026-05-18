@@ -1,4 +1,4 @@
-﻿# Performance
+# Performance
 
 <p>
   <a href="../zh/PERFORMANCE.md">简体中文</a> ·

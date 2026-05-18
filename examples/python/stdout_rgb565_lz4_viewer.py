@@ -102,7 +102,7 @@ def start_stdout_raw_cast(args: argparse.Namespace, apk: Path) -> subprocess.Pop
             f"CLASSPATH={shlex.quote(args.remote_apk)}",
             "app_process",
             "/",
-            "ink.mol.raw_cast.Main",
+            "com.shiyori.raw_cast.Main",
             "--mode=stdout",
             f"--format={shlex.quote(args.format)}",
             f"--fps={int(args.fps)}",

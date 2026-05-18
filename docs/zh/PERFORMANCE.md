@@ -1,4 +1,4 @@
-﻿# 性能参考
+# 性能参考
 
 <p>
   <a href="./PERFORMANCE.md">简体中文</a> ·

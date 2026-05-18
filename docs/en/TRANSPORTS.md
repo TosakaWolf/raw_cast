@@ -1,4 +1,4 @@
-﻿# Transports
+# Transports
 
 <p>
   <a href="../zh/TRANSPORTS.md">简体中文</a> ·
@@ -15,7 +15,7 @@ Raw TCP is useful for local programs, OpenCV, or clients that want minimal proto
 ```shell
 adb forward tcp:53517 tcp:53517
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --tcp=53517
+    app_process / com.shiyori.raw_cast.Main --tcp=53517
 ```
 
 After connecting, the client writes one ASCII request line:
@@ -32,7 +32,7 @@ stdout mode does not need port forwarding and is useful for automation and local
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --fps=30 \
@@ -48,7 +48,7 @@ HTTP is for debugging only. The default port is 53516:
 ```shell
 adb forward tcp:53516 tcp:53516
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --port=53516
+    app_process / com.shiyori.raw_cast.Main --port=53516
 ```
 
 Endpoints:

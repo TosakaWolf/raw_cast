@@ -1,11 +1,11 @@
-package ink.mol.raw_cast.server
+package com.shiyori.raw_cast.server
 
 import android.util.Log
-import ink.mol.raw_cast.CaptureRequest
-import ink.mol.raw_cast.Frame
-import ink.mol.raw_cast.FrameMux
-import ink.mol.raw_cast.FrameSource
-import ink.mol.raw_cast.PixelFmt
+import com.shiyori.raw_cast.CaptureRequest
+import com.shiyori.raw_cast.Frame
+import com.shiyori.raw_cast.FrameMux
+import com.shiyori.raw_cast.FrameSource
+import com.shiyori.raw_cast.PixelFmt
 import java.io.FileDescriptor
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
@@ -20,7 +20,7 @@ private const val TAG = "raw_cast"
  *
  * Triggered by passing `--mode=stdout` (and optional --format/--fps/--lz4/...)
  * on the command line. Once the process is started by `adb shell ... app_process
- * /  ink.mol.raw_cast.Main --mode=stdout ...`, every screenshot frame is
+ * /  com.shiyori.raw_cast.Main --mode=stdout ...`, every screenshot frame is
  * appended to stdout as `8-byte banner + repeating Frame(s)`.
  *
  *   banner   = magic 'R','C','0','1' + LE uint32 version(=1)

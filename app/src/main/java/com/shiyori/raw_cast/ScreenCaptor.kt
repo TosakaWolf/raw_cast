@@ -1,4 +1,4 @@
-package ink.mol.raw_cast
+package com.shiyori.raw_cast
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
@@ -7,7 +7,7 @@ import android.graphics.Rect
 import android.hardware.HardwareBuffer
 import android.os.Build
 import android.os.IBinder
-import ink.mol.raw_cast.wrapper.DisplayControl
+import com.shiyori.raw_cast.wrapper.DisplayControl
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 
