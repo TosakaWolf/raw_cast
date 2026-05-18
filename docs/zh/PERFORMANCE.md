@@ -38,24 +38,6 @@ HTTP `/stream` 使用长连接和 chunked response，避免每帧重新建连。
 - Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始化一次流，先预热再统计连续取帧；首帧耗时单独记录。
 - 每个组合测完后停止该类型的 reader、forward 和远端进程，避免影响下一个组合。
 
-## 实测参考
-
-以下数据来自 MuMu 模拟器，Android 12，1280x720，测试 `rgb565` 解码并转换为 Mat，连续采样 200 帧且失败数为 0。单帧 `rgb565` 未编码 payload 约 1.76 MB，转换为 Mat 后约 2.64 MB。该结果适合比较同环境下的传输和压缩策略，不代表所有真机表现。
-
-| 组合 | 首帧 | p50 | p95 | 有效 fps | 观察 |
-| --- | ---: | ---: | ---: | ---: | --- |
-| stdout + `rgb565` | 101 ms | 81 ms | 114 ms | 11.93 | 端口最简单，但未压缩大帧容易被 stdout/ADB 管道拖慢 |
-| stdout + `rgb565` + LZ4 | 12 ms | 13 ms | 21 ms | 68.52 | 吞吐提升明显，适合无端口自动化或兜底场景 |
-| Raw TCP + `rgb565` | 50 ms | 44 ms | 59 ms | 22.60 | 未压缩时比 stdout 更稳，首帧也更低 |
-| Raw TCP + `rgb565` + LZ4 | 18 ms | 12 ms | 19 ms | 73.52 | 延迟低且稳定，是该环境下实时 Mat 管线的优先组合 |
-| MuMu render baseline | 7 ms | 7 ms | 8 ms | 133.30 | 模拟器本地渲染基线，不包含 raw_cast 截图和 ADB 传输成本 |
-
-同场景截图对比中，MuMuRender 与 `raw_cast/raw_tcp/rgb565/lz4` 的可见像素基本无差异：
-
-![MuMuRender 与 raw_cast/raw_tcp/rgb565/lz4 截图差异对比](../images/diff_zh.png)
-
-结论：`rgb565` + LZ4 在该模拟器环境中显著降低传输压力；Raw TCP + LZ4 是长时间实时流的优先组合，stdout + LZ4 适合单通道自动化、单帧或端口不可用时的兜底。
-
 ## 推荐组合
 
 | 场景 | 推荐参数 |
