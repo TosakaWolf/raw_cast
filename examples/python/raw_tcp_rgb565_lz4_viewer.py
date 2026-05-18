@@ -722,35 +722,73 @@ def choose_apk_asset(release: dict) -> dict:
     return max(candidates, key=apk_asset_score)
 
 
-def download_latest_release_apk() -> Path:
-    release = fetch_latest_release(RAW_CAST_RELEASE_REPO)
-    asset = choose_apk_asset(release)
+def apk_dest_for_release_asset(release: dict, asset: dict) -> Path:
     tag = sanitize_filename(str(release.get("tag_name") or "latest"))
     asset_name = sanitize_filename(str(asset.get("name") or "raw_cast.apk"))
     if not asset_name.lower().startswith("raw_cast"):
         asset_name = f"raw_cast-{tag}.apk"
-    dest = Path.cwd() / asset_name
+    return Path.cwd() / asset_name
+
+
+def local_apk_matches_asset(local: Path, asset: dict, dest: Path) -> bool:
+    expected_size = int(asset.get("size") or 0)
+    asset_name = sanitize_filename(str(asset.get("name") or local.name))
+    name_matches = local.name == dest.name or local.name == asset_name
+    size_matches = expected_size <= 0 or local.stat().st_size == expected_size
+    return name_matches and size_matches
+
+
+def remove_local_raw_cast_apks(keep: Optional[Path] = None) -> None:
+    keep_resolved = keep.resolve() if keep is not None and keep.exists() else None
+    for apk in sorted(Path.cwd().glob("raw_cast*.apk")):
+        if not apk.is_file():
+            continue
+        if keep_resolved is not None and apk.resolve() == keep_resolved:
+            continue
+        log(f"[apk] remove outdated local APK {apk.name}")
+        apk.unlink()
+
+
+def download_release_apk(release: dict, asset: dict, dest: Path, *, reason: str) -> Path:
     if dest.is_file():
-        log(f"[apk] using downloaded APK {dest.resolve()}")
-        return dest
-    log(f"[apk] no local raw_cast*.apk found; downloading latest release APK")
+        local_size = dest.stat().st_size
+        expected_size = int(asset.get("size") or 0)
+        if expected_size <= 0 or local_size == expected_size:
+            log(f"[apk] using downloaded APK {dest.resolve()}")
+            return dest
+        log(
+            f"[apk] downloaded APK differs from latest asset: "
+            f"{dest.name} local={local_size}B latest={expected_size}B"
+        )
+        dest.unlink()
+    log(f"[apk] {reason}; downloading latest release APK")
     log(f"[apk] release={release.get('tag_name') or 'latest'} asset={asset.get('name')}")
     return download_url(str(asset["browser_download_url"]), dest, label="APK", timeout=180)
 
 
 def prepare_apk() -> Path:
-    local = find_local_apk()
-    if local is not None:
-        log(f"[apk] using local {local.resolve()}")
-        return local
     try:
-        return download_latest_release_apk()
+        release = fetch_latest_release(RAW_CAST_RELEASE_REPO)
+        asset = choose_apk_asset(release)
+        dest = apk_dest_for_release_asset(release, asset)
+        local = find_local_apk()
+        if local is not None and local_apk_matches_asset(local, asset, dest):
+            remove_local_raw_cast_apks(keep=local)
+            log(f"[apk] using latest local {local.resolve()}")
+            return local
+        if local is not None:
+            log(
+                f"[apk] local APK differs from latest release asset; "
+                f"local={local.name} latest={asset.get('name')}"
+            )
+            remove_local_raw_cast_apks()
+        return download_release_apk(release, asset, dest, reason="local raw_cast APK is missing or outdated")
     except Exception as exc:
         raise FileNotFoundError(
             "\n".join(
                 [
-                    f"No raw_cast*.apk found in current working directory: {Path.cwd()}",
-                    f"Latest release APK auto-download from {RAW_CAST_RELEASE_REPO} failed: {exc}",
+                    f"Could not prepare latest raw_cast APK in current working directory: {Path.cwd()}",
+                    f"Latest release APK check/download from {RAW_CAST_RELEASE_REPO} failed: {exc}",
                     "",
                     "Put a raw_cast APK in the current directory with a name like raw_cast.apk,",
                     "or check your network access to GitHub and run the script again.",
