@@ -1,4 +1,4 @@
-# raw_cast Docs
+﻿# raw_cast Docs
 
 <p>
   <a href="../../README.md">简体中文</a> ·
@@ -68,7 +68,7 @@ adb push raw_cast.apk /data/local/tmp/raw_cast.apk
 
 # 2. Start Raw TCP. stdout prints PID/BIND/READY status lines; stderr is log-only.
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --port=0 --tcp=53517 --port-retry=10
 
 # 3. Wait for stdout status lines; BIND:TCP is the actual device-side port.
@@ -91,7 +91,7 @@ ADB stdout binary stream. stdout mode opens no network port. stdout is the pure 
 
 ```shell
 adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --fps=120 \
@@ -103,7 +103,7 @@ Enable LZ4 or capture one frame:
 
 ```shell
 adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --fps=120 \
@@ -111,7 +111,7 @@ adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
     2>/dev/null'
 
 adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --oneshot \
@@ -123,7 +123,7 @@ HTTP is only for browser preview and debug streaming:
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --port=53516 --tcp=53517 --port-retry=10
 
 # After READY=1, forward the actual ports printed by BIND.

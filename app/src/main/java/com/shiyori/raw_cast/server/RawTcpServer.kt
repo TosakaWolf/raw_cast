@@ -1,11 +1,11 @@
-package ink.mol.raw_cast.server
+﻿package com.shiyori.raw_cast.server
 
 import android.util.Log
-import ink.mol.raw_cast.CaptureRequest
-import ink.mol.raw_cast.Frame
-import ink.mol.raw_cast.FrameMux
-import ink.mol.raw_cast.FrameSource
-import ink.mol.raw_cast.PixelFmt
+import com.shiyori.raw_cast.CaptureRequest
+import com.shiyori.raw_cast.Frame
+import com.shiyori.raw_cast.FrameMux
+import com.shiyori.raw_cast.FrameSource
+import com.shiyori.raw_cast.PixelFmt
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.Socket
@@ -31,7 +31,7 @@ private const val TAG = "raw_cast"
  *   3. Server writes the 8-byte banner: bytes 'R','C','0','1', then a
  *      little-endian uint32 protocol version (currently 1).
  *   4. Server then writes an unbounded stream of frames; each frame is a
- *      32-byte raw_cast header + payload bytes (see ink.mol.raw_cast.Frame).
+ *      32-byte raw_cast header + payload bytes (see com.shiyori.raw_cast.Frame).
  *   5. Client may close the socket at any time; the server detects EOF/IO
  *      error on the next write and tears the session down.
  *

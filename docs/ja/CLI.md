@@ -15,14 +15,14 @@ Raw TCP の主経路：
 ```shell
 adb forward tcp:53517 tcp:53517
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --tcp=53517
+    app_process / com.shiyori.raw_cast.Main --tcp=53517
 ```
 
 stdout モード：
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --fps=30 \
@@ -35,7 +35,7 @@ HTTP/1.1 は debug preview と debug stream 専用です。
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --port=53516 --tcp=53517
 ```
 

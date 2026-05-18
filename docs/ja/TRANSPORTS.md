@@ -15,7 +15,7 @@ Raw TCP はローカルプログラム、OpenCV、低オーバーヘッドを求
 ```shell
 adb forward tcp:53517 tcp:53517
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --tcp=53517
+    app_process / com.shiyori.raw_cast.Main --tcp=53517
 ```
 
 接続後、クライアントは ASCII のリクエスト行を 1 行送ります。
@@ -32,7 +32,7 @@ stdout モードはポート転送が不要で、自動化やローカルプロ�
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --fps=30 \
@@ -48,7 +48,7 @@ HTTP は debug 専用です。デフォルトポートは 53516 です。
 ```shell
 adb forward tcp:53516 tcp:53516
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main --port=53516
+    app_process / com.shiyori.raw_cast.Main --port=53516
 ```
 
 エンドポイント：

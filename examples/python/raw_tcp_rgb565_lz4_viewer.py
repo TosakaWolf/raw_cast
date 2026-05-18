@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Raw TCP raw-pixel viewer for raw_cast.
 
@@ -800,7 +800,7 @@ def start_raw_cast(args: argparse.Namespace, apk: Path):
         f"CLASSPATH={args.remote_apk}",
         "app_process",
         "/",
-        "ink.mol.raw_cast.Main",
+        "com.shiyori.raw_cast.Main",
         f"--port={args.http}",
         f"--tcp={args.tcp}",
         f"--port-retry={args.port_retry}",

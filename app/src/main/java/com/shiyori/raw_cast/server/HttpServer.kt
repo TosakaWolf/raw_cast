@@ -1,11 +1,11 @@
-package ink.mol.raw_cast.server
+﻿package com.shiyori.raw_cast.server
 
 import android.util.Log
-import ink.mol.raw_cast.CaptureRequest
-import ink.mol.raw_cast.EncodedFrame
-import ink.mol.raw_cast.FrameMux
-import ink.mol.raw_cast.FrameSource
-import ink.mol.raw_cast.PixelFmt
+import com.shiyori.raw_cast.CaptureRequest
+import com.shiyori.raw_cast.EncodedFrame
+import com.shiyori.raw_cast.FrameMux
+import com.shiyori.raw_cast.FrameSource
+import com.shiyori.raw_cast.PixelFmt
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream

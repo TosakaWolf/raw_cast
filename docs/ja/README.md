@@ -1,4 +1,4 @@
-# raw_cast ドキュメント
+﻿# raw_cast ドキュメント
 
 <p>
   <a href="../../README.md">简体中文</a> ·
@@ -68,7 +68,7 @@ adb push raw_cast.apk /data/local/tmp/raw_cast.apk
 
 # 2. Raw TCP を起動。stdout は PID/BIND/READY の状態行、stderr はログ専用です。
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --port=0 --tcp=53517 --port-retry=10
 
 # 3. stdout の状態行を待ちます。BIND:TCP は端末側の実バインドポートです。
@@ -91,7 +91,7 @@ ADB stdout binary stream。stdout モードはネットワークポートを開�
 
 ```shell
 adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --fps=120 \
@@ -103,7 +103,7 @@ LZ4 を有効化、または 1 フレームだけ取得：
 
 ```shell
 adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --fps=120 \
@@ -111,7 +111,7 @@ adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
     2>/dev/null'
 
 adb exec-out sh -c 'CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --oneshot \
@@ -123,7 +123,7 @@ HTTP はブラウザ preview と debug stream 専用です。
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --port=53516 --tcp=53517 --port-retry=10
 
 # READY=1 の後、BIND が出力した実ポートへ forward。

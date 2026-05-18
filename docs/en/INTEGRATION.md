@@ -14,7 +14,7 @@ Network mode must keep the `adb shell` process alive and read startup status fro
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --port=53516 --tcp=53517
 ```
 
@@ -45,7 +45,7 @@ stdout mode is useful when the caller directly consumes the binary stream:
 
 ```shell
 adb shell CLASSPATH=/data/local/tmp/raw_cast.apk \
-    app_process / ink.mol.raw_cast.Main \
+    app_process / com.shiyori.raw_cast.Main \
     --mode=stdout \
     --format=rgb565 \
     --fps=30 \
