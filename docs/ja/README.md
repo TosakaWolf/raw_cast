@@ -8,6 +8,20 @@
 
 raw_cast は Android のスクリーンショット取得とストリーミングのためのツールです。APK のインストールは不要で、SurfaceControl + HardwareBuffer を利用します。
 
+## 互換性
+
+対象互換範囲は Android 6.0 から Android 14（SDK 23 から 34）です。Android 15 以降は端末ごとの実測確認が必要です。
+
+## ベンチマーク参考
+
+MuMu エミュレーター、Android 12、1280x720 で `rgb565` を Mat に変換したテストでは、`rgb565` は `rgba` より pixel payload が小さく、Mat 変換後は約 2.64 MB でした。LZ4 を有効にすると stdout は約 68.52 fps、Raw TCP は約 73.52 fps になり、未圧縮では Raw TCP が stdout より明確に有利でした。
+
+同じシーンでは、MuMuRender と `raw_cast/raw_tcp/rgb565/lz4` の可視ピクセル差はほぼありません。
+
+![MuMuRender and raw_cast/raw_tcp/rgb565/lz4 screenshot diff](../images/diff_en.jpg)
+
+より詳しいテスト環境、指標、推奨設定は [PERFORMANCE.md](PERFORMANCE.md) を参照してください。
+
 ## クイックスタート
 
 ### Raw TCP の組み込み
@@ -87,6 +101,17 @@ adb forward tcp:53517 tcp:53517
 # http://127.0.0.1:53516/stream?format=rgb565&fps=120&compress=lz4
 ```
 
+## ドキュメント
+
+| 文書 | リンク |
+| --- | --- |
+| コマンドライン引数、stdout の状態行、起動例 | [CLI.md](CLI.md) |
+| Raw TCP、stdout、HTTP debug channel | [TRANSPORTS.md](TRANSPORTS.md) |
+| RC01 フレーム形式、format id、LZ4 ルール | [PROTOCOL.md](PROTOCOL.md) |
+| Python、Go、Node.js、Java 連携 | [INTEGRATION.md](INTEGRATION.md) |
+| format、transport、compression の性能上の違い | [PERFORMANCE.md](PERFORMANCE.md) |
+| 起動、接続、解析のよくある問題 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
+
 ## オプションパラメータ
 
 ### 起動オプション
@@ -145,18 +170,3 @@ Raw TCP は接続後に空白区切りの `key=value` を 1 行送ります。HT
 | `webp` | 12 | - | `quality=` と system version に依存する lossy/lossless image |
 
 `compress=lz4` は `rgb565/rgba` のみに適用されます。PNG/WEBP は LZ4 で包みません。
-
-## ドキュメント
-
-| 文書 | リンク |
-| --- | --- |
-| コマンドライン引数、stdout の状態行、起動例 | [CLI.md](CLI.md) |
-| Raw TCP、stdout、HTTP debug channel | [TRANSPORTS.md](TRANSPORTS.md) |
-| RC01 フレーム形式、format id、LZ4 ルール | [PROTOCOL.md](PROTOCOL.md) |
-| Python、Go、Node.js、Java 連携 | [INTEGRATION.md](INTEGRATION.md) |
-| format、transport、compression の性能上の違い | [PERFORMANCE.md](PERFORMANCE.md) |
-| 起動、接続、解析のよくある問題 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
-
-## 互換性
-
-対象互換範囲は Android 6.0 から Android 14（SDK 23 から 34）です。Android 15 以降は端末ごとの実測確認が必要です。

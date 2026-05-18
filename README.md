@@ -21,6 +21,20 @@
 
 </div>
 
+## 兼容性
+
+目标兼容 Android 6.0 到 Android 14（SDK 23 到 34）。Android 15 及以上需要按设备实测确认。
+
+## 性能基准
+
+MuMu 模拟器（Android 12，1280x720）下的 `rgb565` 转 Mat 测试显示：`rgb565` 像素负载相比 `rgba` 更小，转 Mat 后约 2.64 MB；开启 LZ4 后 stdout 约 68.52 fps，Raw TCP 约 73.52 fps，未压缩时 Raw TCP 明显优于 stdout。
+
+同场景下，MuMuRender 与 `raw_cast/raw_tcp/rgb565/lz4` 的截图对比显示可见像素基本无差异：
+
+![MuMuRender 与 raw_cast/raw_tcp/rgb565/lz4 截图差异对比](docs/images/diff_zh.png)
+
+更完整的测试环境、指标和建议见 [docs/zh/PERFORMANCE.md](docs/zh/PERFORMANCE.md)。
+
 ## 快速开始
 
 ### Raw TCP 快速接入
@@ -99,6 +113,17 @@ adb forward tcp:53517 tcp:53517
 # http://127.0.0.1:53516/stream?format=rgb565&fps=120&compress=none
 # http://127.0.0.1:53516/stream?format=rgb565&fps=120&compress=lz4
 ```
+
+## 文档
+
+| 文档 | 链接 |
+| --- | --- |
+| 命令行参数、端口输出和启动示例 | [docs/zh/CLI.md](docs/zh/CLI.md) |
+| Raw TCP、stdout、HTTP 调试通道 | [docs/zh/TRANSPORTS.md](docs/zh/TRANSPORTS.md) |
+| RC01 帧头、格式 id、LZ4 规则 | [docs/zh/PROTOCOL.md](docs/zh/PROTOCOL.md) |
+| 宿主端集成建议 | [docs/zh/INTEGRATION.md](docs/zh/INTEGRATION.md) |
+| 格式、传输和性能建议 | [docs/zh/PERFORMANCE.md](docs/zh/PERFORMANCE.md) |
+| 常见问题排查 | [docs/zh/TROUBLESHOOTING.md](docs/zh/TROUBLESHOOTING.md) |
 
 ## 可选参数
 
@@ -204,31 +229,6 @@ Raw TCP 和 ADB stdout 会先输出 8 字节 banner：
 ```
 
 HTTP `/stream` 使用 chunked response；每个 chunk 是一帧完整的 RC01 header + payload。详见 [docs/zh/PROTOCOL.md](docs/zh/PROTOCOL.md)。
-
-## 兼容性
-
-目标兼容 Android 6.0 到 Android 14（SDK 23 到 34）。Android 15 及以上需要按设备实测确认。
-
-## 性能基准
-
-MuMu 模拟器（Android 12，1280x720）下的 `rgb565` 转 Mat 测试显示：`rgb565` 像素负载相比 `rgba` 更小，转 Mat 后约 2.64 MB；开启 LZ4 后 stdout 约 68.52 fps，Raw TCP 约 73.52 fps，未压缩时 Raw TCP 明显优于 stdout。
-
-同场景下，MuMuRender 与 `raw_cast/raw_tcp/rgb565/lz4` 的截图对比显示可见像素基本无差异：
-
-![MuMuRender 与 raw_cast/raw_tcp/rgb565/lz4 截图差异对比](docs/images/diff_zh.png)
-
-更完整的测试环境、指标和建议见 [docs/zh/PERFORMANCE.md](docs/zh/PERFORMANCE.md)。
-
-## 文档
-
-| 文档 | 链接 |
-| --- | --- |
-| 命令行参数、端口输出和启动示例 | [docs/zh/CLI.md](docs/zh/CLI.md) |
-| Raw TCP、stdout、HTTP 调试通道 | [docs/zh/TRANSPORTS.md](docs/zh/TRANSPORTS.md) |
-| RC01 帧头、格式 id、LZ4 规则 | [docs/zh/PROTOCOL.md](docs/zh/PROTOCOL.md) |
-| 宿主端集成建议 | [docs/zh/INTEGRATION.md](docs/zh/INTEGRATION.md) |
-| 格式、传输和性能建议 | [docs/zh/PERFORMANCE.md](docs/zh/PERFORMANCE.md) |
-| 常见问题排查 | [docs/zh/TROUBLESHOOTING.md](docs/zh/TROUBLESHOOTING.md) |
 
 ## 致谢与参考
 

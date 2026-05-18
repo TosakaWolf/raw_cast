@@ -8,6 +8,20 @@
 
 raw_cast is an Android screenshot and streaming tool. It does not require APK installation and is based on SurfaceControl + HardwareBuffer.
 
+## Compatibility
+
+Target compatibility: Android 6.0 through Android 14, SDK 23 through 34. Android 15 and later should be verified per device.
+
+## Performance Benchmark
+
+In a MuMu emulator test, Android 12 at 1280x720, decoding `rgb565` into Mat showed that `rgb565` has a smaller pixel payload than `rgba`, with about 2.64 MB after Mat conversion. With LZ4 enabled, stdout reached about 68.52 fps and Raw TCP reached about 73.52 fps. Without compression, Raw TCP was clearly better than stdout.
+
+In the same scene, MuMuRender and `raw_cast/raw_tcp/rgb565/lz4` were visually indistinguishable:
+
+![MuMuRender and raw_cast/raw_tcp/rgb565/lz4 screenshot diff](../images/diff_en.jpg)
+
+For the full test environment, metrics, and recommendations, see [PERFORMANCE.md](PERFORMANCE.md).
+
 ## Quick Start
 
 ### Raw TCP Integration
@@ -87,6 +101,17 @@ adb forward tcp:53517 tcp:53517
 # http://127.0.0.1:53516/stream?format=rgb565&fps=120&compress=lz4
 ```
 
+## Documents
+
+| Document | Link |
+| --- | --- |
+| Command-line options, stdout status lines, launch examples | [CLI.md](CLI.md) |
+| Raw TCP, stdout, HTTP debug channel | [TRANSPORTS.md](TRANSPORTS.md) |
+| RC01 frame format, format ids, LZ4 rules | [PROTOCOL.md](PROTOCOL.md) |
+| Python, Go, Node.js, and Java integration notes | [INTEGRATION.md](INTEGRATION.md) |
+| Format, transport, and compression tradeoffs | [PERFORMANCE.md](PERFORMANCE.md) |
+| Common launch, connection, and parsing issues | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
+
 ## Optional Parameters
 
 ### Launch options
@@ -145,18 +170,3 @@ Raw TCP sends one whitespace-separated `key=value` line after connecting; the HT
 | `webp` | 12 | - | Lossy or lossless image depending on `quality=` and system version |
 
 `compress=lz4` only applies to `rgb565/rgba`. PNG/WEBP are not wrapped in LZ4.
-
-## Documents
-
-| Document | Link |
-| --- | --- |
-| Command-line options, stdout status lines, launch examples | [CLI.md](CLI.md) |
-| Raw TCP, stdout, HTTP debug channel | [TRANSPORTS.md](TRANSPORTS.md) |
-| RC01 frame format, format ids, LZ4 rules | [PROTOCOL.md](PROTOCOL.md) |
-| Python, Go, Node.js, and Java integration notes | [INTEGRATION.md](INTEGRATION.md) |
-| Format, transport, and compression tradeoffs | [PERFORMANCE.md](PERFORMANCE.md) |
-| Common launch, connection, and parsing issues | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
-
-## Compatibility
-
-Target compatibility: Android 6.0 through Android 14, SDK 23 through 34. Android 15 and later should be verified per device.
