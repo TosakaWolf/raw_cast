@@ -623,6 +623,41 @@ def connect_adb_address(args: argparse.Namespace) -> None:
         log(f"[adb] serial {args.serial}")
 
 
+def select_adb_device(args: argparse.Namespace) -> None:
+    if args.serial:
+        log(f"[adb] serial {args.serial}")
+        return
+    if args.adb_address:
+        connect_adb_address(args)
+        return
+
+    proc = run_adb(args, ["devices"], "adb devices", use_serial=False)
+    devices: list[str] = []
+    for line in proc.stdout.splitlines()[1:]:
+        parts = line.split()
+        if len(parts) >= 2 and parts[1] == "device":
+            devices.append(parts[0])
+
+    if not devices:
+        raise RuntimeError("No adb device found. Connect a USB device, start an emulator, or pass --adb-address HOST:PORT.")
+    if len(devices) == 1:
+        args.serial = devices[0]
+        log(f"[adb] serial {args.serial}")
+        return
+
+    usb_devices = [serial for serial in devices if ":" not in serial]
+    if len(usb_devices) == 1:
+        args.serial = usb_devices[0]
+        log(f"[adb] serial {args.serial} (USB)")
+        return
+
+    raise RuntimeError(
+        "Multiple adb devices found: "
+        + ", ".join(devices)
+        + ". Pass --serial SERIAL for USB devices or --adb-address HOST:PORT for TCP ADB."
+    )
+
+
 def find_local_apk() -> Optional[Path]:
     cwd = Path.cwd()
     candidates = [p for p in cwd.glob("raw_cast*.apk") if p.is_file()]
@@ -1139,7 +1174,7 @@ def main() -> int:
         log(f"[cwd] {Path.cwd()}")
         log("[prepare] checking adb")
         resolve_adb(args)
-        connect_adb_address(args)
+        select_adb_device(args)
         log("[prepare] checking APK")
         apk = prepare_apk()
         tk, Image, ImageTk, lz4_block = load_runtime_deps(args.compress)

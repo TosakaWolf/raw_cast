@@ -44,6 +44,7 @@ from raw_tcp_rgb565_lz4_viewer import (
     resolve_adb,
     run_viewer,
     run_adb,
+    select_adb_device,
     setup_forward,
     terminate_process,
 )
@@ -395,7 +396,7 @@ def main() -> int:
         log(f"[cwd] {Path.cwd()}")
         log("[prepare] checking adb")
         resolve_adb(args)
-        connect_adb_address(args)
+        select_adb_device(args)
         apk = prepare_apk(args)
         tk, Image, ImageTk, _lz4_block = load_runtime_deps("none")
         proc, stdout, stderr = start_droidcast(args, apk)
