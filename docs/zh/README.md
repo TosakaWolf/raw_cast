@@ -169,4 +169,4 @@ Benchmark 建议每个“传输 + 像素格式 + 压缩方式”组合只初始�
 
 ## 兼容性
 
-目标兼容 Android 6.0 到 Android 14（SDK 23 到 34）。Android 15 及以上需要按设备实测确认。
+目标兼容 Android 6.0 到 Android 15（SDK 23 到 35）。

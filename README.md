@@ -23,7 +23,7 @@ raw_cast 是一个基于 ADB 的 Android 实时屏幕捕获与流传输工具，
 
 ## 兼容性
 
-目标兼容 Android 6.0 到 Android 14（SDK 23 到 34）。Android 15 及以上需要按设备实测确认。
+目标兼容 Android 6.0 到 Android 15（SDK 23 到 35）。
 
 ## 性能基准
 

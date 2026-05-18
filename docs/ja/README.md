@@ -12,7 +12,7 @@ raw_cast は ADB ベースで動作する Android のリアルタイム画面キ
 
 ## 互換性
 
-対象互換範囲は Android 6.0 から Android 14（SDK 23 から 34）です。Android 15 以降は端末ごとの実測確認が必要です。
+対象互換範囲は Android 6.0 から Android 15（SDK 23 から 35）です。
 
 ## ベンチマーク参考
 

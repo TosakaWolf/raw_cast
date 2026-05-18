@@ -12,7 +12,7 @@ raw_cast is an ADB-based real-time Android screen capture and streaming tool wit
 
 ## Compatibility
 
-Target compatibility: Android 6.0 through Android 14, SDK 23 through 34. Android 15 and later should be verified per device.
+Target compatibility: Android 6.0 through Android 15, SDK 23 through 35.
 
 ## Performance Benchmark
 
