@@ -17,6 +17,7 @@ import java.lang.reflect.Method
  */
 @SuppressLint("PrivateApi", "BlockedPrivateApi", "UnsafeDynamicallyLoadedCode")
 object ScreenCaptor {
+    private const val MAX_CACHED_ARGS = 8
     private val sdkInt: Int = Build.VERSION.SDK_INT
     private var surfaceControlClass: Class<*>? = null
     private var getBuiltInDisplayMethod: Method? = null
@@ -69,7 +70,13 @@ object ScreenCaptor {
     }
 
     private data class CachedArgs(
-        val width: Int, val height: Int, val pixfmt: Int?, val args: Any
+        val args: Any
+    )
+
+    private data class CachedArgsKey(
+        val width: Int,
+        val height: Int,
+        val pixfmt: Int?
     )
 
     private data class ScreenCaptureApi(
@@ -88,7 +95,7 @@ object ScreenCaptor {
     )
 
     @Volatile
-    private var cachedArgs: CachedArgs? = null
+    private var cachedArgs: LinkedHashMap<CachedArgsKey, CachedArgs> = LinkedHashMap()
     @Volatile
     private var screenCaptureApi: ScreenCaptureApi? = null
     @Volatile
@@ -137,8 +144,9 @@ object ScreenCaptor {
         val api = getScreenCaptureApi()
         val pixelFormatMethod = pixfmt?.let { resolveSetPixelFormatMethod(api.builderClass) }
         val cachePixfmt = if (pixelFormatMethod != null) pixfmt else null
-        val cached = cachedArgs
-        val args: Any = if (cached != null && cached.width == width && cached.height == height && cached.pixfmt == cachePixfmt) {
+        val cacheKey = CachedArgsKey(width, height, cachePixfmt)
+        val cached = synchronized(this) { cachedArgs[cacheKey] }
+        val args: Any = if (cached != null) {
             cached.args
         } else {
             val builder = api.builderCtor.newInstance(getBuiltInDisplay())
@@ -149,7 +157,7 @@ object ScreenCaptor {
                 null
             }
             val a = api.buildMethod.invoke(builder)!!
-            cachedArgs = CachedArgs(width, height, appliedPixfmt, a)
+            putCachedArgs(CachedArgsKey(width, height, appliedPixfmt), a)
             a
         }
 
@@ -180,14 +188,14 @@ object ScreenCaptor {
             argsClass = argsClass,
             builderClass = builderClass,
             builderCtor = ctor,
-            setSizeMethod = findMethod(
+            setSizeMethod = findScreenCaptureMethod(
                 builderClass,
                 "setSize",
                 Int::class.javaPrimitiveType!!,
                 Int::class.javaPrimitiveType!!
             ).also { it.isAccessible = true },
-            buildMethod = findMethod(builderClass, "build").also { it.isAccessible = true },
-            captureDisplayMethod = findMethod(surfaceControlClass!!, "captureDisplay", argsClass).also {
+            buildMethod = findScreenCaptureMethod(builderClass, "build").also { it.isAccessible = true },
+            captureDisplayMethod = findScreenCaptureMethod(surfaceControlClass!!, "captureDisplay", argsClass).also {
                 it.isAccessible = true
             }
         )
@@ -201,8 +209,8 @@ object ScreenCaptor {
         }
         val accessors = BufferAccessors(
             owner = owner,
-            getColorSpaceMethod = findMethod(owner, "getColorSpace").also { it.isAccessible = true },
-            getHardwareBufferMethod = findMethod(owner, "getHardwareBuffer").also {
+            getColorSpaceMethod = findScreenCaptureMethod(owner, "getColorSpace").also { it.isAccessible = true },
+            getHardwareBufferMethod = findScreenCaptureMethod(owner, "getHardwareBuffer").also {
                 it.isAccessible = true
             }
         )
@@ -214,7 +222,7 @@ object ScreenCaptor {
         if (setPixelFormatUnsupported) return null
         setPixelFormatMethod?.let { return it }
         return try {
-            findMethod(builderClass, "setPixelFormat", Int::class.javaPrimitiveType!!).also {
+            findDeclaredFirstMethod(builderClass, "setPixelFormat", Int::class.javaPrimitiveType!!).also {
                 it.isAccessible = true
                 setPixelFormatMethod = it
             }
@@ -236,11 +244,27 @@ object ScreenCaptor {
         }
     }
 
-    private fun findMethod(owner: Class<*>, name: String, vararg parameterTypes: Class<*>): Method {
+    private fun putCachedArgs(key: CachedArgsKey, args: Any) {
+        synchronized(this) {
+            val next = LinkedHashMap(cachedArgs)
+            if (next.size >= MAX_CACHED_ARGS && !next.containsKey(key)) {
+                val oldest = next.keys.firstOrNull()
+                if (oldest != null) next.remove(oldest)
+            }
+            next[key] = CachedArgs(args)
+            cachedArgs = next
+        }
+    }
+
+    private fun findScreenCaptureMethod(owner: Class<*>, name: String, vararg parameterTypes: Class<*>): Method {
+        return findDeclaredFirstMethod(owner, name, *parameterTypes)
+    }
+
+    private fun findDeclaredFirstMethod(owner: Class<*>, name: String, vararg parameterTypes: Class<*>): Method {
         try {
-            return owner.getMethod(name, *parameterTypes)
+            return owner.getDeclaredMethod(name, *parameterTypes)
         } catch (e: NoSuchMethodException) {
-            var cls: Class<*>? = owner
+            var cls = owner.superclass
             while (cls != null) {
                 try {
                     return cls.getDeclaredMethod(name, *parameterTypes)
@@ -248,7 +272,7 @@ object ScreenCaptor {
                     cls = cls.superclass
                 }
             }
-            throw e
+            return owner.getMethod(name, *parameterTypes)
         }
     }
 

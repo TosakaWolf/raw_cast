@@ -141,14 +141,25 @@ class HttpServer(
     ) {
         val frame = captureFrame(q, preview)
         val contentType = if (frame.format.isRaw) "application/octet-stream" else frame.format.mime()
-        sendFixed(
-            output = output,
-            status = "200 OK",
-            contentType = contentType,
-            body = frame.data,
-            keepAlive = keepAlive,
-            headers = frameHeaders(frame),
-        )
+        if (frame.format.isRaw) {
+            sendFramePayload(
+                output = output,
+                status = "200 OK",
+                contentType = contentType,
+                frame = frame,
+                keepAlive = keepAlive,
+                headers = frameHeaders(frame),
+            )
+        } else {
+            sendFixed(
+                output = output,
+                status = "200 OK",
+                contentType = contentType,
+                body = frame.data,
+                keepAlive = keepAlive,
+                headers = frameHeaders(frame),
+            )
+        }
     }
 
     private fun stream(output: OutputStream, q: Map<String, String>, keepAlive: Boolean) {
@@ -237,19 +248,41 @@ class HttpServer(
         keepAlive: Boolean,
         headers: List<Pair<String, String>> = emptyList(),
     ) {
-        val head = buildString {
-            append("HTTP/1.1 ").append(status).append("\r\n")
-            append("Content-Type: ").append(contentType).append("\r\n")
-            append("Content-Length: ").append(body.size).append("\r\n")
-            append("Cache-Control: no-cache\r\n")
-            append("Connection: ").append(if (keepAlive) "keep-alive" else "close").append("\r\n")
-            for ((k, v) in headers) append(k).append(": ").append(v).append("\r\n")
-            append("\r\n")
-        }.toByteArray(StandardCharsets.US_ASCII)
+        val head = buildFixedHead(status, contentType, body.size, keepAlive, headers)
         output.write(head)
         output.write(body)
         output.flush()
     }
+
+    private fun sendFramePayload(
+        output: OutputStream,
+        status: String,
+        contentType: String,
+        frame: EncodedFrame,
+        keepAlive: Boolean,
+        headers: List<Pair<String, String>> = emptyList(),
+    ) {
+        val head = buildFixedHead(status, contentType, frame.payloadSize, keepAlive, headers)
+        output.write(head)
+        FrameMux.writePayloadTo(output, frame)
+        output.flush()
+    }
+
+    private fun buildFixedHead(
+        status: String,
+        contentType: String,
+        contentLength: Int,
+        keepAlive: Boolean,
+        headers: List<Pair<String, String>>,
+    ): ByteArray = buildString {
+        append("HTTP/1.1 ").append(status).append("\r\n")
+        append("Content-Type: ").append(contentType).append("\r\n")
+        append("Content-Length: ").append(contentLength).append("\r\n")
+        append("Cache-Control: no-cache\r\n")
+        append("Connection: ").append(if (keepAlive) "keep-alive" else "close").append("\r\n")
+        for ((k, v) in headers) append(k).append(": ").append(v).append("\r\n")
+        append("\r\n")
+    }.toByteArray(StandardCharsets.US_ASCII)
 
     private data class HttpRequest(
         val method: String,

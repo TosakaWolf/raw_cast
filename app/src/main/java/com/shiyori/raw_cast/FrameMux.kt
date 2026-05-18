@@ -18,6 +18,10 @@ object FrameMux {
 
     fun writeTo(output: OutputStream, frame: EncodedFrame) {
         output.write(headerBytes(frame))
+        writePayloadTo(output, frame)
+    }
+
+    fun writePayloadTo(output: OutputStream, frame: EncodedFrame) {
         when (val payload = frame.payload) {
             is ByteArrayPayload -> output.write(payload.bytes)
             is ByteBufferPayload -> writeBufferToOutput(output, payload.duplicateForRead())

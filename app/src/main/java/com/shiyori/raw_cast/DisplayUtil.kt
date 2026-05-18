@@ -11,6 +11,7 @@ import java.lang.reflect.Method
 class DisplayUtil {
 
     private var iWindowManager: IWindowManager? = null
+    @Volatile private var rotationMethod: Method? = null
 
     init {
         try {
@@ -41,15 +42,22 @@ class DisplayUtil {
     fun getScreenRotation(): Int {
         var rotation = 0
         try {
-            val cls = iWindowManager!!.javaClass
-            rotation = try {
-                cls.getMethod("getRotation").invoke(iWindowManager) as Int
-            } catch (e: NoSuchMethodException) {
-                cls.getMethod("getDefaultDisplayRotation").invoke(iWindowManager) as Int
-            }
+            rotation = getRotationMethod().invoke(iWindowManager) as Int
         } catch (e: Exception) {
             e.printStackTrace()
         }
         return rotation
+    }
+
+    private fun getRotationMethod(): Method {
+        rotationMethod?.let { return it }
+        val cls = iWindowManager!!.javaClass
+        val method = try {
+            cls.getMethod("getRotation")
+        } catch (e: NoSuchMethodException) {
+            cls.getMethod("getDefaultDisplayRotation")
+        }
+        rotationMethod = method
+        return method
     }
 }
