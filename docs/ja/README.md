@@ -6,7 +6,9 @@
   <a href="./README.md">日本語</a>
 </p>
 
-raw_cast は Android のスクリーンショット取得とストリーミングのためのツールです。APK のインストールは不要で、SurfaceControl + HardwareBuffer を利用します。
+## 概要
+
+raw_cast は ADB ベースで動作する Android のリアルタイム画面キャプチャ、ストリーミング、スクリーンショットツールです。APK のインストールは不要で、SurfaceControl + HardwareBuffer を利用します。
 
 ## 互換性
 

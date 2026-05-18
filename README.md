@@ -15,11 +15,11 @@
   <a href="./docs/ja/README.md">日本語</a>
 </p>
 
-<p>
-  <strong>raw_cast 是一个 Android 截图和取流工具，无需安装 APK，基于 SurfaceControl + HardwareBuffer。</strong>
-</p>
-
 </div>
+
+## 简介
+
+raw_cast 是一个基于 ADB 的 Android 实时屏幕捕获与流传输工具，支持截图，无需安装 APK，基于 SurfaceControl + HardwareBuffer。
 
 ## 兼容性
 

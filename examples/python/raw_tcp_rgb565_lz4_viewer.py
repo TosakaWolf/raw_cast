@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Raw TCP RGB565/LZ4 viewer for raw_cast.
+Raw TCP raw-pixel viewer for raw_cast.
 
 The script auto-detects raw_cast*.apk in the current working directory.
 If no APK is present, it downloads the latest release APK from
@@ -10,7 +10,7 @@ TosakaWolf/raw_cast:
     python raw_tcp_rgb565_lz4_viewer.py --adb-address 127.0.0.1:16384
 
 The script pushes the APK, starts raw_cast through app_process, opens both
-Raw TCP and HTTP/1.1 debug ports, then displays the Raw TCP RGB565/LZ4 stream
+Raw TCP and HTTP/1.1 debug ports, then displays the Raw TCP raw-pixel stream
 with Tkinter. HTTP is only started and forwarded for manual debugging; open
 the printed /preview or /screenshot URLs in a browser or another HTTP client.
 """
@@ -40,9 +40,9 @@ from typing import Deque, Iterable, Optional
 
 
 PLATFORM_TOOLS_URLS = {
-    "linux": "https://dl.google.com/android/repository/platform-tools-latest-linux.zip",
-    "darwin": "https://dl.google.com/android/repository/platform-tools-latest-darwin.zip",
-    "windows": "https://dl.google.com/android/repository/platform-tools-latest-windows.zip",
+    "linux": "https://i0.shiyori.com/static/files/platform-tools-latest-linux.zip",
+    "darwin": "https://i0.shiyori.com/static/files/platform-tools-latest-darwin.zip",
+    "windows": "https://i0.shiyori.com/static/files/platform-tools-latest-windows.zip",
 }
 RAW_CAST_RELEASE_REPO = "TosakaWolf/raw_cast"
 GITHUB_API = "https://api.github.com"
@@ -54,8 +54,20 @@ PROTOCOL_VERSION = 1
 FRAME_HEADER_SIZE = 32
 FLAG_LZ4 = 0x01
 FORMAT_RGB565 = 1
+FORMAT_RGBA = 2
 RGB565_BPP = 2
+RGBA_BPP = 4
+FORMAT_IDS = {
+    "rgb565": FORMAT_RGB565,
+    "rgba": FORMAT_RGBA,
+}
+FORMAT_BYTES_PER_PIXEL = {
+    "rgb565": RGB565_BPP,
+    "rgba": RGBA_BPP,
+}
 WARMUP_FRAMES = 2
+DEFAULT_FORMAT = "rgb565"
+DEFAULT_COMPRESS = "lz4"
 HEADER_STRUCT = struct.Struct("<IBBHIIIIII")
 _PRINT_LOCK = threading.Lock()
 _INLINE_ACTIVE = False
@@ -256,7 +268,7 @@ class Metrics:
             f"decoded={self.last_decoded_size / 1048576.0:.2f}MiB"
         )
 
-    def overlay_text(self) -> str:
+    def overlay_text(self, bench_label: str) -> str:
         now = time.perf_counter()
         self._trim_recent(now)
         elapsed = max(now - self.start, 1e-6)
@@ -269,7 +281,7 @@ class Metrics:
         p95 = percentile(self.intervals_ms, 95)
         return "\n".join(
             [
-                "bench rgb565/lz4",
+                bench_label,
                 f"frames {self.frames}  seq {self.last_seq}",
                 f"fps {recent_fps:.2f} / avg {avg_fps:.2f}",
                 f"first {first:.1f} ms",
@@ -304,7 +316,7 @@ def percentile(values: Iterable[float], pct: int) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Start raw_cast and view Raw TCP rgb565/lz4 frames with Tkinter.",
+        description="Start raw_cast and view Raw TCP raw-pixel frames with Tkinter.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("--remote-apk", default="/data/local/tmp/raw_cast.apk", help="device APK path")
@@ -316,30 +328,40 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--serial", help="adb device serial")
     parser.add_argument("--tcp", type=int, default=53517, help="local/requested Raw TCP port")
     parser.add_argument("--http", type=int, default=53516, help="local/requested HTTP debug port; 0 disables HTTP")
+    parser.add_argument("--format", choices=("rgb565", "rgba"), default=DEFAULT_FORMAT, help="Raw TCP request pixel format")
     parser.add_argument("--fps", type=int, default=120, help="Raw TCP request fps")
+    parser.add_argument("--compress", choices=("lz4", "none"), default=DEFAULT_COMPRESS, help="Raw TCP request compression")
     parser.add_argument("--port-retry", type=int, default=10, help="device-side bind retry count")
     parser.add_argument("--ready-timeout", type=float, default=15.0, help="seconds to wait for READY=1")
     parser.add_argument("--connect-timeout", type=float, default=10.0, help="seconds to wait for local TCP connect")
     parser.add_argument("--stats-interval", type=float, default=0.3, help="bench overlay refresh interval in seconds")
     parser.add_argument("--fps-window", type=float, default=2.0, help="recent fps/throughput window")
-    parser.add_argument("--max-payload-mib", type=int, default=128, help="safety limit for one compressed payload")
+    parser.add_argument("--max-payload-mib", type=int, default=128, help="safety limit for one frame payload")
     parser.add_argument("--max-window-width", type=int, default=1280, help="maximum displayed image width")
     parser.add_argument("--max-window-height", type=int, default=900, help="maximum displayed image height")
     parser.add_argument("--show-stderr", action="store_true", help="print raw_cast stderr logs")
     return parser.parse_args()
 
 
-def load_runtime_deps():
+def load_runtime_deps(compress: str):
     try:
         import tkinter as tk
         from PIL import Image, ImageTk
-        import lz4.block
     except ImportError as exc:
         raise RuntimeError(
             "Missing Python dependency: "
             f"{exc}\nInstall with: python -m pip install -r requirements.txt"
         ) from exc
-    return tk, Image, ImageTk, lz4.block
+    lz4_block = None
+    if compress == "lz4":
+        try:
+            import lz4.block as lz4_block
+        except ImportError as exc:
+            raise RuntimeError(
+                "Missing Python dependency: "
+                f"{exc}\nInstall with: python -m pip install -r requirements.txt"
+            ) from exc
+    return tk, Image, ImageTk, lz4_block
 
 
 def http_request(url: str, *, accept: str = "*/*", timeout: float = 60.0):
@@ -867,16 +889,19 @@ def parse_banner(data: bytes) -> int:
     return version
 
 
-def parse_frame_header(data: bytes, max_payload_bytes: int) -> FrameHeader:
+def parse_frame_header(data: bytes, max_payload_bytes: int, expect_lz4: bool, expected_format: int, format_name: str) -> FrameHeader:
     if len(data) != FRAME_HEADER_SIZE or data[:4] != MAGIC:
         raise ValueError("invalid RC01 frame magic")
     _, version, flags, fmt, seq, width, height, stride, payload_size, timestamp_ms = HEADER_STRUCT.unpack(data)
     if version != 1:
         raise ValueError(f"unsupported frame version: {version}")
-    if fmt != FORMAT_RGB565:
-        raise ValueError(f"unexpected frame format id {fmt}; this example only accepts rgb565 id 1")
-    if (flags & FLAG_LZ4) == 0:
+    if fmt != expected_format:
+        raise ValueError(f"unexpected frame format id {fmt}; this example requests {format_name} id {expected_format}")
+    is_lz4 = (flags & FLAG_LZ4) != 0
+    if expect_lz4 and not is_lz4:
         raise ValueError("frame is not LZ4-compressed; this example requests compress=lz4")
+    if not expect_lz4 and is_lz4:
+        raise ValueError("frame is LZ4-compressed; this example requests compress=none")
     if payload_size <= 0 or payload_size > max_payload_bytes:
         raise ValueError(f"invalid payload size: {payload_size}")
     if width <= 0 or height <= 0:
@@ -884,12 +909,24 @@ def parse_frame_header(data: bytes, max_payload_bytes: int) -> FrameHeader:
     return FrameHeader(version, flags, fmt, seq, width, height, stride, payload_size, timestamp_ms)
 
 
+def raw_payload_to_image(Image, fmt: str, width: int, height: int, payload: bytes):
+    if fmt == "rgb565":
+        return Image.frombytes("RGB", (width, height), payload, "raw", "BGR;16")
+    if fmt == "rgba":
+        return Image.frombytes("RGBA", (width, height), payload, "raw", "RGBA")
+    raise ValueError(f"unsupported viewer format: {fmt}")
+
+
 def reader_loop(args, image_queue, error_queue, stop_event, bench_state: BenchState, Image, lz4_block) -> None:
-    request_line = f"format=rgb565 fps={args.fps} width=0 height=0 compress=lz4\n"
+    request_line = f"format={args.format} fps={args.fps} width=0 height=0 compress={args.compress}\n"
     metrics = Metrics(args.fps_window)
     max_payload_bytes = args.max_payload_mib * 1024 * 1024
     warmup_seen = 0
     last_bench_update = 0.0
+    expect_lz4 = args.compress == "lz4"
+    expected_format = FORMAT_IDS[args.format]
+    bytes_per_pixel = FORMAT_BYTES_PER_PIXEL[args.format]
+    bench_label = f"bench {args.format}/{args.compress}"
     try:
         with connect_with_retry("127.0.0.1", args.tcp, args.connect_timeout) as sock:
             sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -899,27 +936,38 @@ def reader_loop(args, image_queue, error_queue, stop_event, bench_state: BenchSt
             version = parse_banner(read_exact(sock, 8, stop_event))
             log(f"[raw-tcp] protocol version={version}; request={request_line.strip()}")
             log(f"[bench] warmup frames={WARMUP_FRAMES}")
-            bench_state.set_overlay(f"bench rgb565/lz4\nwarmup 0/{WARMUP_FRAMES}")
+            bench_state.set_overlay(f"{bench_label}\nwarmup 0/{WARMUP_FRAMES}")
             while not stop_event.is_set():
-                header = parse_frame_header(read_exact(sock, FRAME_HEADER_SIZE, stop_event), max_payload_bytes)
+                header = parse_frame_header(
+                    read_exact(sock, FRAME_HEADER_SIZE, stop_event),
+                    max_payload_bytes,
+                    expect_lz4,
+                    expected_format,
+                    args.format,
+                )
                 payload = read_exact(sock, header.payload_size, stop_event)
-                decoded_size = header.width * header.height * RGB565_BPP
-                rgb565 = lz4_block.decompress(payload, uncompressed_size=decoded_size)
-                if len(rgb565) != decoded_size:
-                    raise ValueError(f"decoded size mismatch: {len(rgb565)} != {decoded_size}")
-                image = Image.frombytes("RGB", (header.width, header.height), rgb565, "raw", "BGR;16")
+                decoded_size = header.width * header.height * bytes_per_pixel
+                if expect_lz4:
+                    if lz4_block is None:
+                        raise RuntimeError("lz4 module was not loaded")
+                    raw_pixels = lz4_block.decompress(payload, uncompressed_size=decoded_size)
+                else:
+                    raw_pixels = payload
+                if len(raw_pixels) != decoded_size:
+                    raise ValueError(f"decoded size mismatch: {len(raw_pixels)} != {decoded_size}")
+                image = raw_payload_to_image(Image, args.format, header.width, header.height, raw_pixels)
                 now = time.perf_counter()
                 if warmup_seen < WARMUP_FRAMES:
                     warmup_seen += 1
-                    bench_state.set_overlay(f"bench rgb565/lz4\nwarmup {warmup_seen}/{WARMUP_FRAMES}")
+                    bench_state.set_overlay(f"{bench_label}\nwarmup {warmup_seen}/{WARMUP_FRAMES}")
                     if warmup_seen == WARMUP_FRAMES:
                         metrics.reset(now)
                     continue
-                metrics.observe(header, len(payload), len(rgb565), now)
+                metrics.observe(header, len(payload), len(raw_pixels), now)
                 summary = metrics.summary()
                 bench_state.set_summary_only(summary)
                 if now - last_bench_update >= args.stats_interval:
-                    bench_state.set_summary(summary, metrics.overlay_text())
+                    bench_state.set_summary(summary, metrics.overlay_text(bench_label))
                     last_bench_update = now
                 put_latest(image_queue, FrameItem(image=image, seq=header.seq))
     except Exception as exc:
@@ -946,7 +994,7 @@ def put_latest(q: "queue.Queue[FrameItem]", item: FrameItem) -> None:
 
 def run_viewer(args, ImageTk, tk, image_queue, error_queue, stop_event, bench_state: BenchState) -> Optional[BaseException]:
     root = tk.Tk()
-    root.title("raw_cast Raw TCP rgb565/lz4")
+    root.title(getattr(args, "window_title", f"raw_cast Raw TCP {args.format}/{args.compress}"))
     label = tk.Label(root, background="black")
     label.pack(fill="both", expand=True)
     overlay = tk.Label(
@@ -1087,14 +1135,14 @@ def main() -> int:
     reader: Optional[threading.Thread] = None
 
     try:
-        log("[raw_cast-python] starting Raw TCP rgb565/lz4 viewer")
+        log(f"[raw_cast-python] starting Raw TCP {args.format}/{args.compress} viewer")
         log(f"[cwd] {Path.cwd()}")
         log("[prepare] checking adb")
         resolve_adb(args)
         connect_adb_address(args)
         log("[prepare] checking APK")
         apk = prepare_apk()
-        tk, Image, ImageTk, lz4_block = load_runtime_deps()
+        tk, Image, ImageTk, lz4_block = load_runtime_deps(args.compress)
         raw_proc, _stderr, status = start_raw_cast(args, apk)
         tcp_device_port = bind_port(status, "TCP")
         if tcp_device_port is None:

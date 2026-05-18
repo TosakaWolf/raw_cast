@@ -6,7 +6,9 @@
   <a href="../ja/README.md">日本語</a>
 </p>
 
-raw_cast is an Android screenshot and streaming tool. It does not require APK installation and is based on SurfaceControl + HardwareBuffer.
+## Overview
+
+raw_cast is an ADB-based real-time Android screen capture and streaming tool with screenshot support. It requires no APK installation and uses SurfaceControl + HardwareBuffer.
 
 ## Compatibility
 
