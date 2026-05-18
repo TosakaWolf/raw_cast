@@ -4,7 +4,7 @@
 # raw_cast
 
 <p>
-  <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-AGPL--3.0--or--later-blue"></a>
+  <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-AGPL--3.0--only-blue"></a>
   <a href="https://github.com/TosakaWolf/raw_cast/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/TosakaWolf/raw_cast?style=flat"></a>
   <a href="https://github.com/TosakaWolf/raw_cast/releases"><img alt="GitHub downloads" src="https://img.shields.io/github/downloads/TosakaWolf/raw_cast/total?label=downloads"></a>
 </p>
@@ -244,9 +244,9 @@ HTTP `/stream` 使用 chunked response；每个 chunk 是一帧完整的 RC01 he
 
 ## License
 
-raw_cast is licensed under the GNU Affero General Public License v3.0 or later.
+raw_cast is licensed under the GNU Affero General Public License v3.0 only.
 
-SPDX-License-Identifier: `AGPL-3.0-or-later`
+SPDX-License-Identifier: `AGPL-3.0-only`
 
 Third-party code and referenced upstream work retain their original licenses.
 See [NOTICE](NOTICE) and the license files inside each third-party directory,

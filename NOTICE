@@ -1,10 +1,10 @@
 raw_cast
 Copyright (C) 2026 raw_cast contributors
 
-Project license: AGPL-3.0-or-later
+Project license: AGPL-3.0-only
 
 This project is distributed under the GNU Affero General Public License,
-version 3 or any later version published by the Free Software Foundation.
+version 3 only.
 See LICENSE for the full license text.
 
 Third-party notices and retained upstream licenses:
