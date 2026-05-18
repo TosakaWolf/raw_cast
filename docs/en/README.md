@@ -14,23 +14,33 @@ Target compatibility: Android 6.0 through Android 14, SDK 23 through 34. Android
 
 ## Performance Benchmark
 
-![Python example benchmark](../images/py_bench.png)
+<table>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <strong>Example Code Test</strong><br>
+      <img src="../images/py_bench.png" alt="Python example benchmark" width="430">
+      <br>
+      <sub><code>raw_tcp_rgb565_lz4</code> example code test result.</sub>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <strong>Pixel Diff</strong><br>
+      <img src="../images/diff_en.jpg" alt="MuMuRender and raw_cast/raw_tcp/rgb565/lz4 screenshot diff" width="430"><br>
+      <sub>In the same scene, the two outputs were visually indistinguishable.</sub>
+    </td>
+  </tr>
+</table>
 
-The following reference run used MuMu emulator 12, Android 12, 1280x720, decoding `rgb565` frames into Mat for 200 samples with 0 failures. Each unencoded `rgb565` payload was about 1.76 MB, and the converted Mat was about 2.64 MB. Treat these numbers as transport and compression comparisons within that environment, not universal device results.
+The following reference run used MuMu emulator 12, Android 12, 1280x720, decoding `rgb565` frames into Mat.
 
-| Combo | First frame | p50 | p95 | Effective fps | Observation |
-| --- | ---: | ---: | ---: | ---: | --- |
-| stdout + `rgb565` | 101 ms | 81 ms | 114 ms | 11.93 | Simplest startup path, but uncompressed large frames can be limited by stdout and ADB pipe throughput |
-| stdout + `rgb565` + LZ4 | 12 ms | 13 ms | 21 ms | 68.52 | Much higher throughput, useful for no-port automation and fallback paths |
-| Raw TCP + `rgb565` | 50 ms | 44 ms | 59 ms | 22.60 | More stable than stdout when uncompressed, with much lower first-frame latency |
-| Raw TCP + `rgb565` + LZ4 | 18 ms | 12 ms | 19 ms | 73.52 | Low and stable latency, the preferred combo for real-time Mat pipelines in this environment |
-| MuMu render baseline | 7 ms | 7 ms | 8 ms | 133.30 | Emulator-local render baseline; excludes raw_cast capture and ADB transfer cost |
-
-In the same scene, MuMuRender and `raw_cast/raw_tcp/rgb565/lz4` were visually indistinguishable:
-
-![MuMuRender and raw_cast/raw_tcp/rgb565/lz4 screenshot diff](../images/diff_en.jpg)
-
-Takeaway: `rgb565` + LZ4 greatly reduces transfer pressure in this emulator test. Raw TCP + LZ4 is the better default for long-running real-time streams; stdout + LZ4 remains useful for single-channel automation, one-shot capture, or port-unavailable fallback. For more performance recommendations, see [PERFORMANCE.md](PERFORMANCE.md).
+<table>
+  <tr><th>Combo</th><th>First frame</th><th>p50</th><th>p95</th><th>Effective fps</th><th>Summary</th></tr>
+  <tr><td>stdout + <code>rgb565</code></td><td align="right">101 ms</td><td align="right">81 ms</td><td align="right">114 ms</td><td align="right">11.93</td><td>Large uncompressed frames are limited by stdout/ADB throughput</td></tr>
+  <tr><td>stdout + <code>rgb565</code> + LZ4</td><td align="right">12 ms</td><td align="right">13 ms</td><td align="right">21 ms</td><td align="right">68.52</td><td>LZ4 improves throughput and suits no-port paths</td></tr>
+  <tr><td>Raw TCP + <code>rgb565</code></td><td align="right">50 ms</td><td align="right">44 ms</td><td align="right">59 ms</td><td align="right">22.60</td><td>More stable than stdout, but still bandwidth-heavy</td></tr>
+  <tr><td>Raw TCP + <code>rgb565</code> + LZ4</td><td align="right">18 ms</td><td align="right">12 ms</td><td align="right">19 ms</td><td align="right">73.52</td><td>Low and stable latency; preferred for real-time streams</td></tr>
+  <tr><td>MuMu render baseline</td><td align="right">7 ms</td><td align="right">7 ms</td><td align="right">8 ms</td><td align="right">133.30</td><td>Local render baseline; excludes capture and transfer cost</td></tr>
+  <tr><td colspan="6"><code>rgb565</code> + LZ4 greatly reduces transfer pressure in this emulator test. Raw TCP + LZ4 is the better default for long-running real-time streams; stdout + LZ4 remains useful for single-channel automation, one-shot capture, or port-unavailable fallback. For more performance recommendations, see <a href="PERFORMANCE.md">PERFORMANCE.md</a>.</td></tr>
+</table>
 
 ## Quick Start
 

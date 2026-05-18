@@ -14,23 +14,33 @@ raw_cast は Android のスクリーンショット取得とストリーミン�
 
 ## ベンチマーク参考
 
-![Python example benchmark](../images/py_bench.png)
+<table>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <strong>サンプルコードテスト</strong><br>
+      <img src="../images/py_bench.png" alt="Python example benchmark" width="430">
+      <br>
+      <sub><code>raw_tcp_rgb565_lz4</code> サンプルコードテスト結果。</sub>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <strong>ピクセル差分</strong><br>
+      <img src="../images/diff_en.jpg" alt="MuMuRender and raw_cast/raw_tcp/rgb565/lz4 screenshot diff" width="430"><br>
+      <sub>同じシーンでは、両者の可視ピクセル差はほぼありません。</sub>
+    </td>
+  </tr>
+</table>
 
-以下は MuMu エミュレーター 12、Android 12、1280x720 で、`rgb565` を Mat に変換した 200 フレーム、失敗 0 の参考値です。未エンコードの `rgb565` payload は 1 フレーム約 1.76 MB、変換後の Mat は約 2.64 MB です。この値は同じ環境で transport と compression を比較するためのもので、すべての実機で同じ結果になるわけではありません。
+以下は MuMu エミュレーター 12、Android 12、1280x720 で、`rgb565` を Mat に変換した参考値です。
 
-| 組み合わせ | 初回フレーム | p50 | p95 | 実効 fps | 傾向 |
-| --- | ---: | ---: | ---: | ---: | --- |
-| stdout + `rgb565` | 101 ms | 81 ms | 114 ms | 11.93 | 起動は単純ですが、未圧縮の大きなフレームでは stdout/ADB pipe が詰まりやすいです |
-| stdout + `rgb565` + LZ4 | 12 ms | 13 ms | 21 ms | 68.52 | throughput が大きく改善し、ポートを使わない自動化や fallback に向きます |
-| Raw TCP + `rgb565` | 50 ms | 44 ms | 59 ms | 22.60 | 未圧縮では stdout より安定し、初回フレームも短くなります |
-| Raw TCP + `rgb565` + LZ4 | 18 ms | 12 ms | 19 ms | 73.52 | latency が低く安定しており、この環境ではリアルタイム Mat pipeline の優先候補です |
-| MuMu render baseline | 7 ms | 7 ms | 8 ms | 133.30 | エミュレーター内部の render baseline で、raw_cast capture と ADB 転送 cost は含みません |
-
-同じシーンでは、MuMuRender と `raw_cast/raw_tcp/rgb565/lz4` の可視ピクセル差はほぼありません。
-
-![MuMuRender and raw_cast/raw_tcp/rgb565/lz4 screenshot diff](../images/diff_en.jpg)
-
-まとめると、この emulator 環境では `rgb565` + LZ4 が転送負荷を大きく下げます。長時間のリアルタイム stream では Raw TCP + LZ4 を優先し、stdout + LZ4 は単一 channel の自動化、one-shot、ポートが使えない場合の fallback として使うのが向いています。その他の性能上の推奨は [PERFORMANCE.md](PERFORMANCE.md) を参照してください。
+<table>
+  <tr><th>組み合わせ</th><th>初回フレーム</th><th>p50</th><th>p95</th><th>実効 fps</th><th>概要</th></tr>
+  <tr><td>stdout + <code>rgb565</code></td><td align="right">101 ms</td><td align="right">81 ms</td><td align="right">114 ms</td><td align="right">11.93</td><td>未圧縮大フレームは stdout/ADB throughput の制約を受けやすい</td></tr>
+  <tr><td>stdout + <code>rgb565</code> + LZ4</td><td align="right">12 ms</td><td align="right">13 ms</td><td align="right">21 ms</td><td align="right">68.52</td><td>LZ4 で throughput が改善し、ポートなし用途に向きます</td></tr>
+  <tr><td>Raw TCP + <code>rgb565</code></td><td align="right">50 ms</td><td align="right">44 ms</td><td align="right">59 ms</td><td align="right">22.60</td><td>stdout より安定しますが、帯域負荷は残ります</td></tr>
+  <tr><td>Raw TCP + <code>rgb565</code> + LZ4</td><td align="right">18 ms</td><td align="right">12 ms</td><td align="right">19 ms</td><td align="right">73.52</td><td>低 latency で安定し、リアルタイム stream 向きです</td></tr>
+  <tr><td>MuMu render baseline</td><td align="right">7 ms</td><td align="right">7 ms</td><td align="right">8 ms</td><td align="right">133.30</td><td>ローカル render baseline。capture と転送 cost は含みません</td></tr>
+  <tr><td colspan="6">この emulator 環境では <code>rgb565</code> + LZ4 が転送負荷を大きく下げます。長時間のリアルタイム stream では Raw TCP + LZ4 を優先し、stdout + LZ4 は単一 channel の自動化、one-shot、ポートが使えない場合の fallback として使うのが向いています。その他の性能上の推奨は <a href="PERFORMANCE.md">PERFORMANCE.md</a> を参照してください。</td></tr>
+</table>
 
 ## クイックスタート
 

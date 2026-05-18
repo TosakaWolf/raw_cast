@@ -27,23 +27,33 @@
 
 ## 性能基准
 
-![Python 示例性能测试](docs/images/py_bench.png)
+<table>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <strong>示例代码测试</strong><br>
+      <img src="docs/images/py_bench.png" alt="Python 示例性能测试" width="430">
+      <br>
+      <sub><code>raw_tcp_rgb565_lz4</code> 示例代码测试结果。</sub>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <strong>像素对比</strong><br>
+      <img src="docs/images/diff_zh.png" alt="MuMuRender 与 raw_cast/raw_tcp/rgb565/lz4 截图差异对比" width="430"><br>
+      <sub>同场景下，两者的可见像素基本无差异。</sub>
+    </td>
+  </tr>
+</table>
 
-以下数据来自 MuMu 模拟器 12，Android 12，1280x720，测试 `rgb565` 解码并转换为 Mat，连续采样 200 帧且失败数为 0。单帧 `rgb565` 未编码 payload 约 1.76 MB，转换为 Mat 后约 2.64 MB。该结果适合比较同环境下的传输和压缩策略，不代表所有真机表现。
+以下数据来自 MuMu 模拟器 12，Android 12，1280x720，测试 `rgb565` 解码并转换为 Mat。
 
-| 组合 | 首帧 | p50 | p95 | 有效 fps | 观察 |
-| --- | ---: | ---: | ---: | ---: | --- |
-| stdout + `rgb565` | 101 ms | 81 ms | 114 ms | 11.93 | 端口最简单，但未压缩大帧容易被 stdout/ADB 管道拖慢 |
-| stdout + `rgb565` + LZ4 | 12 ms | 13 ms | 21 ms | 68.52 | 吞吐提升明显，适合无端口自动化或兜底场景 |
-| Raw TCP + `rgb565` | 50 ms | 44 ms | 59 ms | 22.60 | 未压缩时比 stdout 更稳，首帧也更低 |
-| Raw TCP + `rgb565` + LZ4 | 18 ms | 12 ms | 19 ms | 73.52 | 延迟低且稳定，是该环境下实时 Mat 管线的优先组合 |
-| MuMu render baseline | 7 ms | 7 ms | 8 ms | 133.30 | 模拟器本地渲染基线，不包含 raw_cast 截图和 ADB 传输成本 |
-
-同场景下，MuMuRender 与 `raw_cast/raw_tcp/rgb565/lz4` 的截图对比显示可见像素基本无差异：
-
-![MuMuRender 与 raw_cast/raw_tcp/rgb565/lz4 截图差异对比](docs/images/diff_zh.png)
-
-结论：`rgb565` + LZ4 在该模拟器环境中显著降低传输压力；Raw TCP + LZ4 是长时间实时流的优先组合，stdout + LZ4 适合单通道自动化、单帧或端口不可用时的兜底。更多性能建议见 [docs/zh/PERFORMANCE.md](docs/zh/PERFORMANCE.md)。
+<table>
+  <tr><th>组合</th><th>首帧</th><th>p50</th><th>p95</th><th>有效 fps</th><th>摘要</th></tr>
+  <tr><td>stdout + <code>rgb565</code></td><td align="right">101 ms</td><td align="right">81 ms</td><td align="right">114 ms</td><td align="right">11.93</td><td>未压缩大帧受 stdout/ADB 吞吐限制</td></tr>
+  <tr><td>stdout + <code>rgb565</code> + LZ4</td><td align="right">12 ms</td><td align="right">13 ms</td><td align="right">21 ms</td><td align="right">68.52</td><td>压缩后吞吐明显改善，适合无端口场景</td></tr>
+  <tr><td>Raw TCP + <code>rgb565</code></td><td align="right">50 ms</td><td align="right">44 ms</td><td align="right">59 ms</td><td align="right">22.60</td><td>比 stdout 更稳，但仍占用较高带宽</td></tr>
+  <tr><td>Raw TCP + <code>rgb565</code> + LZ4</td><td align="right">18 ms</td><td align="right">12 ms</td><td align="right">19 ms</td><td align="right">73.52</td><td>低延迟且稳定，实时流优先</td></tr>
+  <tr><td>MuMu render baseline</td><td align="right">7 ms</td><td align="right">7 ms</td><td align="right">8 ms</td><td align="right">133.30</td><td>本地渲染基线，不含截图与传输成本</td></tr>
+  <tr><td colspan="6"><code>rgb565</code> + LZ4 在该模拟器环境中显著降低传输压力；Raw TCP + LZ4 是长时间实时流的优先组合，stdout + LZ4 适合单通道自动化、单帧或端口不可用时的兜底。更多性能建议见 <a href="docs/zh/PERFORMANCE.md">docs/zh/PERFORMANCE.md</a>。</td></tr>
+</table>
 
 ## 快速开始
 
