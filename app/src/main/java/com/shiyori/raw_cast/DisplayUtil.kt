@@ -27,7 +27,10 @@ class DisplayUtil {
     fun getCurrentDisplaySize(): Point {
         return try {
             val p = Point()
-            iWindowManager?.getInitialDisplaySize(0, p)
+            iWindowManager?.getBaseDisplaySize(0, p)
+            if (p.x <= 0 || p.y <= 0) {
+                iWindowManager?.getInitialDisplaySize(0, p)
+            }
             p
         } catch (e: Exception) {
             e.printStackTrace()
