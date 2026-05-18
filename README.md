@@ -7,6 +7,9 @@
   <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-AGPL--3.0--only-blue"></a>
   <a href="https://github.com/TosakaWolf/raw_cast/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/TosakaWolf/raw_cast?style=flat"></a>
   <a href="https://github.com/TosakaWolf/raw_cast/releases"><img alt="GitHub downloads" src="https://img.shields.io/github/downloads/TosakaWolf/raw_cast/total?label=downloads"></a>
+  <a href="https://github.com/TosakaWolf/raw_cast/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/TosakaWolf/raw_cast?label=release"></a>
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Android-3DDC84">
+  <img alt="Target SDK" src="https://img.shields.io/badge/target%20SDK-34-3DDC84">
 </p>
 
 <p>
