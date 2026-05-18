@@ -20,7 +20,6 @@ from __future__ import annotations
 import argparse
 import collections
 import dataclasses
-import hashlib
 import json
 import os
 import queue
@@ -732,35 +731,8 @@ def apk_dest_for_release_asset(release: dict, asset: dict) -> Path:
 
 
 def local_apk_matches_asset(local: Path, asset: dict, dest: Path) -> bool:
-    digest = asset_sha256(asset)
-    if digest is not None:
-        return sha256_file(local) == digest
-    expected_size = int(asset.get("size") or 0)
     asset_name = sanitize_filename(str(asset.get("name") or local.name))
-    name_matches = local.name == dest.name or local.name == asset_name
-    size_matches = expected_size <= 0 or local.stat().st_size == expected_size
-    return name_matches and size_matches
-
-
-def asset_sha256(asset: dict) -> Optional[str]:
-    digest = str(asset.get("digest") or "")
-    prefix = "sha256:"
-    if digest.lower().startswith(prefix):
-        value = digest[len(prefix):].strip().lower()
-        if len(value) == 64 and all(ch in "0123456789abcdef" for ch in value):
-            return value
-    return None
-
-
-def sha256_file(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        while True:
-            chunk = f.read(1024 * 1024)
-            if not chunk:
-                break
-            h.update(chunk)
-    return h.hexdigest()
+    return local.name == dest.name or local.name == asset_name
 
 
 def remove_local_raw_cast_apks(keep: Optional[Path] = None) -> None:
@@ -779,12 +751,7 @@ def download_release_apk(release: dict, asset: dict, dest: Path, *, reason: str)
         if local_apk_matches_asset(dest, asset, dest):
             log(f"[apk] using downloaded APK {dest.resolve()}")
             return dest
-        local_size = dest.stat().st_size
-        expected_size = int(asset.get("size") or 0)
-        log(
-            f"[apk] downloaded APK differs from latest asset: "
-            f"{dest.name} local={local_size}B latest={expected_size}B"
-        )
+        log(f"[apk] downloaded APK name differs from latest asset: {dest.name} latest={asset.get('name')}")
         dest.unlink()
     log(f"[apk] {reason}; downloading latest release APK")
     log(f"[apk] release={release.get('tag_name') or 'latest'} asset={asset.get('name')}")
