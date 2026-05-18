@@ -14,6 +14,8 @@ raw_cast は Android のスクリーンショット取得とストリーミン�
 
 ## ベンチマーク参考
 
+![Python example benchmark](../images/py_bench.png)
+
 以下は MuMu エミュレーター 12、Android 12、1280x720 で、`rgb565` を Mat に変換した 200 フレーム、失敗 0 の参考値です。未エンコードの `rgb565` payload は 1 フレーム約 1.76 MB、変換後の Mat は約 2.64 MB です。この値は同じ環境で transport と compression を比較するためのもので、すべての実機で同じ結果になるわけではありません。
 
 | 組み合わせ | 初回フレーム | p50 | p95 | 実効 fps | 傾向 |

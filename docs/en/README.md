@@ -14,6 +14,8 @@ Target compatibility: Android 6.0 through Android 14, SDK 23 through 34. Android
 
 ## Performance Benchmark
 
+![Python example benchmark](../images/py_bench.png)
+
 The following reference run used MuMu emulator 12, Android 12, 1280x720, decoding `rgb565` frames into Mat for 200 samples with 0 failures. Each unencoded `rgb565` payload was about 1.76 MB, and the converted Mat was about 2.64 MB. Treat these numbers as transport and compression comparisons within that environment, not universal device results.
 
 | Combo | First frame | p50 | p95 | Effective fps | Observation |
