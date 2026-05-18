@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """ADB stdout raw-pixel viewer for raw_cast.
 
 Unlike Raw TCP, stdout mode does not accept a request line. Capture format,

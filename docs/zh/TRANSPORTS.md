@@ -1,4 +1,4 @@
-﻿# 传输方式
+# 传输方式
 
 <p>
   <a href="./TRANSPORTS.md">简体中文</a> ·

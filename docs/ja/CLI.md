@@ -1,4 +1,4 @@
-﻿# CLI
+# CLI
 
 <p>
   <a href="../zh/CLI.md">简体中文</a> ·

@@ -1,4 +1,4 @@
-﻿# raw_cast ドキュメント
+# raw_cast ドキュメント
 
 <p>
   <a href="../../README.md">简体中文</a> ·

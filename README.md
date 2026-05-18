@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
   <img src="docs/images/icon1.png" alt="raw_cast icon" width="256" height="256" >
 
 # raw_cast

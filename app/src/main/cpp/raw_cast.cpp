@@ -1,4 +1,4 @@
-﻿// raw_cast JNI bridge.
+// raw_cast JNI bridge.
 //
 // Performance-critical path: locks an AHardwareBuffer / AndroidBitmap, performs
 // an in-place pixel-format conversion (when needed) directly into a caller

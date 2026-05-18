@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Raw TCP raw-pixel viewer for raw_cast.
 

@@ -1,4 +1,4 @@
-﻿# Troubleshooting
+# Troubleshooting
 
 <p>
   <a href="../zh/TROUBLESHOOTING.md">简体中文</a> ·

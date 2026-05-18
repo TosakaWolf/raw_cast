@@ -1,4 +1,4 @@
-﻿# Protocol
+# Protocol
 
 <p>
   <a href="../zh/PROTOCOL.md">简体中文</a> ·

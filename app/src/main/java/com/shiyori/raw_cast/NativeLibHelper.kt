@@ -1,4 +1,4 @@
-﻿package com.shiyori.raw_cast
+package com.shiyori.raw_cast
 
 import android.os.Build
 

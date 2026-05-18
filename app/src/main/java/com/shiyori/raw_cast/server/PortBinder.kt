@@ -1,4 +1,4 @@
-﻿package com.shiyori.raw_cast.server
+package com.shiyori.raw_cast.server
 
 import android.util.Log
 import java.net.BindException

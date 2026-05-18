@@ -1,4 +1,4 @@
-﻿# RC01 协议
+# RC01 协议
 
 <p>
   <a href="./PROTOCOL.md">简体中文</a> ·

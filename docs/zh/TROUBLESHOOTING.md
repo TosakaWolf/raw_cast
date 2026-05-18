@@ -1,4 +1,4 @@
-﻿# 故障排查
+# 故障排查
 
 <p>
   <a href="./TROUBLESHOOTING.md">简体中文</a> ·

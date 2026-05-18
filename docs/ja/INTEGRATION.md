@@ -1,4 +1,4 @@
-﻿# Integration
+# Integration
 
 <p>
   <a href="../zh/INTEGRATION.md">简体中文</a> ·

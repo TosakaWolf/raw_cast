@@ -1,4 +1,4 @@
-﻿raw_cast {
+raw_cast {
   global:
     Java_com_shiyori_raw_1cast_*;
   local:

@@ -1,4 +1,4 @@
-﻿package com.shiyori.raw_cast
+package com.shiyori.raw_cast
 
 /**
  * Single screenshot request, decoupled from any transport.

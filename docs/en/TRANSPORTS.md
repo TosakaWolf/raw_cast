@@ -1,4 +1,4 @@
-﻿# Transports
+# Transports
 
 <p>
   <a href="../zh/TRANSPORTS.md">简体中文</a> ·

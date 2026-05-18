@@ -1,4 +1,4 @@
-﻿package com.shiyori.raw_cast;
+package com.shiyori.raw_cast;
 
 /**
  * app_process entry point. The actual logic lives in {@link KtMain}; this

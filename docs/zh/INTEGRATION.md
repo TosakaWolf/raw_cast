@@ -1,4 +1,4 @@
-﻿# 宿主接入
+# 宿主接入
 
 <p>
   <a href="./INTEGRATION.md">简体中文</a> ·
