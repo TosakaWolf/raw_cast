@@ -14,7 +14,7 @@ Target compatibility: Android 6.0 through Android 14, SDK 23 through 34. Android
 
 ## Performance Benchmark
 
-The following reference run used MuMu emulator, Android 12, 1280x720, decoding `rgb565` frames into Mat for 200 samples with 0 failures. Each unencoded `rgb565` payload was about 1.76 MB, and the converted Mat was about 2.64 MB. Treat these numbers as transport and compression comparisons within that environment, not universal device results.
+The following reference run used MuMu emulator 12, Android 12, 1280x720, decoding `rgb565` frames into Mat for 200 samples with 0 failures. Each unencoded `rgb565` payload was about 1.76 MB, and the converted Mat was about 2.64 MB. Treat these numbers as transport and compression comparisons within that environment, not universal device results.
 
 | Combo | First frame | p50 | p95 | Effective fps | Observation |
 | --- | ---: | ---: | ---: | ---: | --- |
@@ -31,6 +31,18 @@ In the same scene, MuMuRender and `raw_cast/raw_tcp/rgb565/lz4` were visually in
 Takeaway: `rgb565` + LZ4 greatly reduces transfer pressure in this emulator test. Raw TCP + LZ4 is the better default for long-running real-time streams; stdout + LZ4 remains useful for single-channel automation, one-shot capture, or port-unavailable fallback. For more performance recommendations, see [PERFORMANCE.md](PERFORMANCE.md).
 
 ## Quick Start
+
+<a id="python-example"></a>
+
+### Python Example
+
+Raw TCP `rgb565` + LZ4 example:
+
+```shell
+cd examples/python
+python -m pip install -r requirements.txt
+python raw_tcp_rgb565_lz4_viewer.py --adb-address 127.0.0.1:16384
+```
 
 ### Raw TCP Integration
 

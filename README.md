@@ -27,7 +27,7 @@
 
 ## 性能基准
 
-以下数据来自 MuMu 模拟器，Android 12，1280x720，测试 `rgb565` 解码并转换为 Mat，连续采样 200 帧且失败数为 0。单帧 `rgb565` 未编码 payload 约 1.76 MB，转换为 Mat 后约 2.64 MB。该结果适合比较同环境下的传输和压缩策略，不代表所有真机表现。
+以下数据来自 MuMu 模拟器 12，Android 12，1280x720，测试 `rgb565` 解码并转换为 Mat，连续采样 200 帧且失败数为 0。单帧 `rgb565` 未编码 payload 约 1.76 MB，转换为 Mat 后约 2.64 MB。该结果适合比较同环境下的传输和压缩策略，不代表所有真机表现。
 
 | 组合 | 首帧 | p50 | p95 | 有效 fps | 观察 |
 | --- | ---: | ---: | ---: | ---: | --- |
@@ -44,6 +44,18 @@
 结论：`rgb565` + LZ4 在该模拟器环境中显著降低传输压力；Raw TCP + LZ4 是长时间实时流的优先组合，stdout + LZ4 适合单通道自动化、单帧或端口不可用时的兜底。更多性能建议见 [docs/zh/PERFORMANCE.md](docs/zh/PERFORMANCE.md)。
 
 ## 快速开始
+
+<a id="python-example"></a>
+
+### Python 示例
+
+Raw TCP `rgb565` + LZ4 示例：
+
+```shell
+cd examples/python
+python -m pip install -r requirements.txt
+python raw_tcp_rgb565_lz4_viewer.py --adb-address 127.0.0.1:16384
+```
 
 ### Raw TCP 快速接入
 

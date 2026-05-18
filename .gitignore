@@ -10,5 +10,7 @@
 local.properties
 *.class
 *.log
+raw_cast*.apk
+examples/platform-tools/
 __pycache__/
 *.pyc

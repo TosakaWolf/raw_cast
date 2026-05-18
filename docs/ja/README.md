@@ -14,7 +14,7 @@ raw_cast は Android のスクリーンショット取得とストリーミン�
 
 ## ベンチマーク参考
 
-以下は MuMu エミュレーター、Android 12、1280x720 で、`rgb565` を Mat に変換した 200 フレーム、失敗 0 の参考値です。未エンコードの `rgb565` payload は 1 フレーム約 1.76 MB、変換後の Mat は約 2.64 MB です。この値は同じ環境で transport と compression を比較するためのもので、すべての実機で同じ結果になるわけではありません。
+以下は MuMu エミュレーター 12、Android 12、1280x720 で、`rgb565` を Mat に変換した 200 フレーム、失敗 0 の参考値です。未エンコードの `rgb565` payload は 1 フレーム約 1.76 MB、変換後の Mat は約 2.64 MB です。この値は同じ環境で transport と compression を比較するためのもので、すべての実機で同じ結果になるわけではありません。
 
 | 組み合わせ | 初回フレーム | p50 | p95 | 実効 fps | 傾向 |
 | --- | ---: | ---: | ---: | ---: | --- |
@@ -31,6 +31,18 @@ raw_cast は Android のスクリーンショット取得とストリーミン�
 まとめると、この emulator 環境では `rgb565` + LZ4 が転送負荷を大きく下げます。長時間のリアルタイム stream では Raw TCP + LZ4 を優先し、stdout + LZ4 は単一 channel の自動化、one-shot、ポートが使えない場合の fallback として使うのが向いています。その他の性能上の推奨は [PERFORMANCE.md](PERFORMANCE.md) を参照してください。
 
 ## クイックスタート
+
+<a id="python-example"></a>
+
+### Python Example
+
+Raw TCP `rgb565` + LZ4 の例:
+
+```shell
+cd examples/python
+python -m pip install -r requirements.txt
+python raw_tcp_rgb565_lz4_viewer.py --adb-address 127.0.0.1:16384
+```
 
 ### Raw TCP の組み込み
 
