@@ -17,6 +17,8 @@ If `adb` is not found, the examples auto-download platform-tools into `examples/
 
 USB devices, or a single connected device, work with the commands below directly. With multiple devices, pass `--serial SERIAL` for a USB device. For emulator ADB over TCP, pass `--adb-address HOST:PORT`.
 
+Raw TCP examples send a request line after connecting. stdout examples do not send a request line; format, FPS, and compression are app_process launch options, and stdout contains only the binary RC01 banner and frames.
+
 ## raw_cast Raw TCP RGB565 + LZ4
 
 ```shell
@@ -39,6 +41,30 @@ python raw_tcp_rgba_lz4_viewer.py
 
 ```shell
 python raw_tcp_rgba_viewer.py
+```
+
+## raw_cast ADB stdout RGB565 + LZ4
+
+```shell
+python stdout_rgb565_lz4_viewer.py
+```
+
+## raw_cast ADB stdout RGB565
+
+```shell
+python stdout_rgb565_viewer.py
+```
+
+## raw_cast ADB stdout RGBA + LZ4
+
+```shell
+python stdout_rgba_lz4_viewer.py
+```
+
+## raw_cast ADB stdout RGBA
+
+```shell
+python stdout_rgba_viewer.py
 ```
 
 ## DroidCast_raw ARGB_8888 Viewer + Benchmark

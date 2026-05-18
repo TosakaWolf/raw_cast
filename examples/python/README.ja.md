@@ -17,6 +17,8 @@ python -m pip install -r requirements.txt
 
 USB 端末、または接続済み端末が 1 台だけの場合は、下のコマンドをそのまま実行できます。複数端末がある場合は USB 端末を `--serial SERIAL` で指定します。エミュレーターの ADB を TCP 経由で使う場合は `--adb-address HOST:PORT` を指定します。
 
+Raw TCP サンプルは接続後に request line を送信します。stdout サンプルは request line を送信せず、format、FPS、compression は `app_process` の起動オプションで指定します。stdout には binary RC01 banner と frame data だけが流れます。
+
 ## raw_cast Raw TCP RGB565 + LZ4
 
 ```shell
@@ -39,6 +41,30 @@ python raw_tcp_rgba_lz4_viewer.py
 
 ```shell
 python raw_tcp_rgba_viewer.py
+```
+
+## raw_cast ADB stdout RGB565 + LZ4
+
+```shell
+python stdout_rgb565_lz4_viewer.py
+```
+
+## raw_cast ADB stdout RGB565
+
+```shell
+python stdout_rgb565_viewer.py
+```
+
+## raw_cast ADB stdout RGBA + LZ4
+
+```shell
+python stdout_rgba_lz4_viewer.py
+```
+
+## raw_cast ADB stdout RGBA
+
+```shell
+python stdout_rgba_viewer.py
 ```
 
 ## DroidCast_raw ARGB_8888 Viewer + Benchmark

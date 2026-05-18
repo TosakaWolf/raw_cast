@@ -17,6 +17,8 @@ python -m pip install -r requirements.txt
 
 USB 设备或单个已连接设备可直接运行下面的命令。多设备时使用 `--serial SERIAL` 指定 USB 设备；模拟器通过 TCP 暴露 ADB 时，使用 `--adb-address HOST:PORT`。
 
+Raw TCP 示例会在连接后发送请求行；stdout 示例不会发送请求行，格式、FPS 和压缩都通过 `app_process` 启动参数设置，stdout 只包含二进制 RC01 banner 和帧数据。
+
 ## raw_cast Raw TCP RGB565 + LZ4
 
 ```shell
@@ -39,6 +41,30 @@ python raw_tcp_rgba_lz4_viewer.py
 
 ```shell
 python raw_tcp_rgba_viewer.py
+```
+
+## raw_cast ADB stdout RGB565 + LZ4
+
+```shell
+python stdout_rgb565_lz4_viewer.py
+```
+
+## raw_cast ADB stdout RGB565
+
+```shell
+python stdout_rgb565_viewer.py
+```
+
+## raw_cast ADB stdout RGBA + LZ4
+
+```shell
+python stdout_rgba_lz4_viewer.py
+```
+
+## raw_cast ADB stdout RGBA
+
+```shell
+python stdout_rgba_viewer.py
 ```
 
 ## DroidCast_raw ARGB_8888 查看 + 压测
