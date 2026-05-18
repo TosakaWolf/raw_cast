@@ -72,8 +72,27 @@ object ScreenCaptor {
         val width: Int, val height: Int, val pixfmt: Int?, val args: Any
     )
 
+    private data class ScreenCaptureApi(
+        val argsClass: Class<*>,
+        val builderClass: Class<*>,
+        val builderCtor: Constructor<*>,
+        val setSizeMethod: Method,
+        val buildMethod: Method,
+        val captureDisplayMethod: Method
+    )
+
+    private data class BufferAccessors(
+        val owner: Class<*>,
+        val getColorSpaceMethod: Method,
+        val getHardwareBufferMethod: Method
+    )
+
     @Volatile
     private var cachedArgs: CachedArgs? = null
+    @Volatile
+    private var screenCaptureApi: ScreenCaptureApi? = null
+    @Volatile
+    private var bufferAccessors: BufferAccessors? = null
     @Volatile
     private var setPixelFormatMethod: Method? = null
     @Volatile
@@ -115,6 +134,34 @@ object ScreenCaptor {
 
     @SuppressLint("NewApi", "BlockedPrivateApi")
     private fun screenshotS(width: Int, height: Int, pixfmt: Int?): Bitmap? {
+        val api = getScreenCaptureApi()
+        val pixelFormatMethod = pixfmt?.let { resolveSetPixelFormatMethod(api.builderClass) }
+        val cachePixfmt = if (pixelFormatMethod != null) pixfmt else null
+        val cached = cachedArgs
+        val args: Any = if (cached != null && cached.width == width && cached.height == height && cached.pixfmt == cachePixfmt) {
+            cached.args
+        } else {
+            val builder = api.builderCtor.newInstance(getBuiltInDisplay())
+            api.setSizeMethod.invoke(builder, width, height)
+            val appliedPixfmt = if (pixfmt != null && pixelFormatMethod != null) {
+                if (applySetPixelFormat(pixelFormatMethod, builder, pixfmt)) pixfmt else null
+            } else {
+                null
+            }
+            val a = api.buildMethod.invoke(builder)!!
+            cachedArgs = CachedArgs(width, height, appliedPixfmt, a)
+            a
+        }
+
+        val sshb = api.captureDisplayMethod.invoke(null, args) ?: return null
+        val accessors = getBufferAccessors(sshb.javaClass)
+        val colorSpace = accessors.getColorSpaceMethod.invoke(sshb) as ColorSpace
+        val hb = accessors.getHardwareBufferMethod.invoke(sshb) as HardwareBuffer
+        return hb.use { Bitmap.wrapHardwareBuffer(it, colorSpace) }
+    }
+
+    private fun getScreenCaptureApi(): ScreenCaptureApi {
+        screenCaptureApi?.let { return it }
         val isU = sdkInt >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
         val argsClass: Class<*>
         val builderClass: Class<*>
@@ -126,40 +173,48 @@ object ScreenCaptor {
             builderClass = Class.forName("android.view.SurfaceControl\$DisplayCaptureArgs\$Builder")
         }
 
-        val pixelFormatMethod = pixfmt?.let { resolveSetPixelFormatMethod(builderClass) }
-        val cachePixfmt = if (pixelFormatMethod != null) pixfmt else null
-        val cached = cachedArgs
-        val args: Any = if (cached != null && cached.width == width && cached.height == height && cached.pixfmt == cachePixfmt) {
-            cached.args
-        } else {
-            val ctor: Constructor<*> = builderClass.getDeclaredConstructor(IBinder::class.java)
-            val builder = ctor.newInstance(getBuiltInDisplay())
-            builderClass.getDeclaredMethod("setSize", Int::class.java, Int::class.java)
-                .invoke(builder, width, height)
-            val appliedPixfmt = if (pixfmt != null && pixelFormatMethod != null) {
-                if (applySetPixelFormat(pixelFormatMethod, builder, pixfmt)) pixfmt else null
-            } else {
-                null
-            }
-            val a = builderClass.getDeclaredMethod("build").invoke(builder)!!
-            cachedArgs = CachedArgs(width, height, appliedPixfmt, a)
-            a
+        val ctor = builderClass.getDeclaredConstructor(IBinder::class.java).also {
+            it.isAccessible = true
         }
+        val api = ScreenCaptureApi(
+            argsClass = argsClass,
+            builderClass = builderClass,
+            builderCtor = ctor,
+            setSizeMethod = findMethod(
+                builderClass,
+                "setSize",
+                Int::class.javaPrimitiveType!!,
+                Int::class.javaPrimitiveType!!
+            ).also { it.isAccessible = true },
+            buildMethod = findMethod(builderClass, "build").also { it.isAccessible = true },
+            captureDisplayMethod = findMethod(surfaceControlClass!!, "captureDisplay", argsClass).also {
+                it.isAccessible = true
+            }
+        )
+        screenCaptureApi = api
+        return api
+    }
 
-        val captureDisplay = surfaceControlClass!!.getDeclaredMethod("captureDisplay", argsClass)
-        val sshb = captureDisplay.invoke(null, args) ?: return null
-        val sshbClass = sshb.javaClass
-        val colorSpace =
-            sshbClass.getDeclaredMethod("getColorSpace").invoke(sshb) as ColorSpace
-        val hb = sshbClass.getDeclaredMethod("getHardwareBuffer").invoke(sshb) as HardwareBuffer
-        return hb.use { Bitmap.wrapHardwareBuffer(it, colorSpace) }
+    private fun getBufferAccessors(owner: Class<*>): BufferAccessors {
+        bufferAccessors?.let {
+            if (it.owner == owner) return it
+        }
+        val accessors = BufferAccessors(
+            owner = owner,
+            getColorSpaceMethod = findMethod(owner, "getColorSpace").also { it.isAccessible = true },
+            getHardwareBufferMethod = findMethod(owner, "getHardwareBuffer").also {
+                it.isAccessible = true
+            }
+        )
+        bufferAccessors = accessors
+        return accessors
     }
 
     private fun resolveSetPixelFormatMethod(builderClass: Class<*>): Method? {
         if (setPixelFormatUnsupported) return null
         setPixelFormatMethod?.let { return it }
         return try {
-            builderClass.getMethod("setPixelFormat", Int::class.java).also {
+            findMethod(builderClass, "setPixelFormat", Int::class.javaPrimitiveType!!).also {
                 it.isAccessible = true
                 setPixelFormatMethod = it
             }
@@ -178,6 +233,22 @@ object ScreenCaptor {
             setPixelFormatUnsupported = true
             warnSetPixelFormatFallback("DisplayCaptureArgs.Builder.setPixelFormat(int) failed")
             false
+        }
+    }
+
+    private fun findMethod(owner: Class<*>, name: String, vararg parameterTypes: Class<*>): Method {
+        try {
+            return owner.getMethod(name, *parameterTypes)
+        } catch (e: NoSuchMethodException) {
+            var cls: Class<*>? = owner
+            while (cls != null) {
+                try {
+                    return cls.getDeclaredMethod(name, *parameterTypes)
+                } catch (ignored: NoSuchMethodException) {
+                    cls = cls.superclass
+                }
+            }
+            throw e
         }
     }
 
