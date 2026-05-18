@@ -8,6 +8,7 @@ import android.hardware.HardwareBuffer
 import android.os.Build
 import android.os.IBinder
 import com.shiyori.raw_cast.wrapper.DisplayControl
+import java.io.Closeable
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 
@@ -88,6 +89,19 @@ object ScreenCaptor {
         val getHardwareBufferMethod: Method
     )
 
+    class CapturedScreen internal constructor(
+        val hardwareBuffer: HardwareBuffer,
+        val colorSpace: ColorSpace
+    ) : Closeable {
+        @SuppressLint("NewApi")
+        fun asBitmap(): Bitmap? = Bitmap.wrapHardwareBuffer(hardwareBuffer, colorSpace)
+
+        @SuppressLint("NewApi")
+        override fun close() {
+            hardwareBuffer.close()
+        }
+    }
+
     @Volatile
     private var cachedArgs: CachedArgs? = null
     @Volatile
@@ -135,6 +149,20 @@ object ScreenCaptor {
 
     @SuppressLint("NewApi", "BlockedPrivateApi")
     private fun screenshotS(width: Int, height: Int, pixfmt: Int?): Bitmap? {
+        return captureBufferS(width, height, pixfmt)?.use { it.asBitmap() }
+    }
+
+    @SuppressLint("NewApi", "BlockedPrivateApi")
+    fun captureBuffer(width: Int, height: Int, surfacePixelFormat: Int? = null): CapturedScreen? {
+        return if (sdkInt >= Build.VERSION_CODES.S) {
+            captureBufferS(width, height, surfacePixelFormat)
+        } else {
+            null
+        }
+    }
+
+    @SuppressLint("NewApi", "BlockedPrivateApi")
+    private fun captureBufferS(width: Int, height: Int, pixfmt: Int?): CapturedScreen? {
         val api = getScreenCaptureApi()
         val pixelFormatMethod = pixfmt?.let { resolveSetPixelFormatMethod(api.builderClass) }
         val cachePixfmt = if (pixelFormatMethod != null) pixfmt else null
@@ -163,7 +191,7 @@ object ScreenCaptor {
         val accessors = getBufferAccessors(sshb.javaClass)
         val colorSpace = accessors.getColorSpaceMethod.invoke(sshb) as ColorSpace
         val hb = accessors.getHardwareBufferMethod.invoke(sshb) as HardwareBuffer
-        return hb.use { Bitmap.wrapHardwareBuffer(it, colorSpace) }
+        return CapturedScreen(hb, colorSpace)
     }
 
     private fun getScreenCaptureApi(): ScreenCaptureApi {

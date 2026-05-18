@@ -12,7 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Encapsulates one full screenshot pipeline:
  *   1. resolve target resolution + rotation
- *   2. ScreenCaptor.screenshot(...) -> Bitmap (HARDWARE on S+)
+ *   2. ScreenCaptor.captureBuffer(...) -> HardwareBuffer on S+ raw paths,
+ *      or ScreenCaptor.screenshot(...) -> Bitmap otherwise
  *   3. encode into RAW (with optional LZ4) or PNG/WEBP
  *
  * Single-threaded by design (one instance per transport). The underlying
@@ -62,14 +63,22 @@ class FrameSource {
             val tmp = w; w = h; h = tmp
         }
 
+        if (req.format.isRaw) {
+            val captured = ScreenCaptor.captureBuffer(w, h, req.format.surfacePixelFormat())
+            if (captured != null) {
+                try {
+                    return encodeRaw(captured, w, h, req)
+                } finally {
+                    captured.close()
+                }
+            }
+        }
+
         val bitmap: Bitmap = ScreenCaptor.screenshot(w, h, req.format.surfacePixelFormat())
             ?: error("ScreenCaptor returned null bitmap")
         try {
-            return if (req.format.isRaw) {
-                encodeRaw(bitmap, w, h, req)
-            } else {
-                encodeCompressed(bitmap, w, h, req)
-            }
+            return if (req.format.isRaw) encodeRaw(bitmap, w, h, req)
+            else encodeCompressed(bitmap, w, h, req)
         } finally {
             bitmap.recycle()
         }
@@ -77,13 +86,50 @@ class FrameSource {
 
     // ---- raw -----------------------------------------------------------------
 
-    private fun encodeRaw(bitmap: Bitmap, w: Int, h: Int, req: CaptureRequest): EncodedFrame {
+    @Suppress("DEPRECATION")
+    private fun encodeRaw(
+        captured: ScreenCaptor.CapturedScreen,
+        w: Int,
+        h: Int,
+        req: CaptureRequest
+    ): EncodedFrame {
+        val rawSize = w * h * req.format.bytesPerPixel
+        val cap = if (req.lz4) NativeBridge.lz4CompressBound(rawSize) else rawSize
+        val buf: ByteBuffer = reusableDirectBuffer(cap)
+
+        val written = if (ScreenCaptor.nativeAvailable) {
+            NativeBridge.copyHardwareBuffer(
+                captured.hardwareBuffer, buf, 0, buf.capacity(), req.format.id, req.lz4
+            )
+        } else {
+            -1
+        }
+
+        if (written >= 0) {
+            return encodedRawFrame(buf, written, w, h, req)
+        }
+
+        val bitmap = captured.asBitmap() ?: error("ScreenCaptor returned null bitmap")
+        try {
+            return encodeRaw(bitmap, w, h, req, tryHardwareBuffer = false)
+        } finally {
+            bitmap.recycle()
+        }
+    }
+
+    private fun encodeRaw(
+        bitmap: Bitmap,
+        w: Int,
+        h: Int,
+        req: CaptureRequest,
+        tryHardwareBuffer: Boolean = true
+    ): EncodedFrame {
         val rawSize = w * h * req.format.bytesPerPixel
         val cap = if (req.lz4) NativeBridge.lz4CompressBound(rawSize) else rawSize
         val buf: ByteBuffer = reusableDirectBuffer(cap)
 
         var written = -1
-        if (ScreenCaptor.nativeAvailable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+        if (tryHardwareBuffer && ScreenCaptor.nativeAvailable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             && bitmap.config == Bitmap.Config.HARDWARE
         ) {
             val hb = bitmap.hardwareBuffer
@@ -115,13 +161,21 @@ class FrameSource {
             )
         }
 
-        return EncodedFrame(
-            payload = ByteBufferPayload(buf, 0, written), width = w, height = h, format = req.format,
-            lz4 = req.lz4, stride = if (req.lz4) 0 else w * req.format.bytesPerPixel,
-            seq = seq.incrementAndGet(),
-            timestampMs = (SystemClock.elapsedRealtime() and 0xFFFFFFFFL).toInt(),
-        )
+        return encodedRawFrame(buf, written, w, h, req)
     }
+
+    private fun encodedRawFrame(
+        buf: ByteBuffer,
+        written: Int,
+        w: Int,
+        h: Int,
+        req: CaptureRequest
+    ): EncodedFrame = EncodedFrame(
+        payload = ByteBufferPayload(buf, 0, written), width = w, height = h, format = req.format,
+        lz4 = req.lz4, stride = if (req.lz4) 0 else w * req.format.bytesPerPixel,
+        seq = seq.incrementAndGet(),
+        timestampMs = (SystemClock.elapsedRealtime() and 0xFFFFFFFFL).toInt(),
+    )
 
     private fun reusableDirectBuffer(capacity: Int): ByteBuffer {
         val current = directBuffer.get()
